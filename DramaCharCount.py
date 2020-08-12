@@ -43,6 +43,33 @@ def parse_args(argv):
         sys.exit(2)
 
 
+def reset_tables(mydb):
+    mycursor = mydb.cursor()
+
+    sql = "DROP TABLE IF EXISTS count"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS drama"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS kanji"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS kanji_info"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
+    mycursor.execute(sql)
+
+    pass
+
+
 def main(argv):
     global sql_host, sql_password, sql_user, sql_database
     parse_args(argv)
@@ -62,6 +89,8 @@ def main(argv):
     else:
         print("Could not connect to database, exiting...")
         sys.exit(2)
+
+    reset_tables(mydb)
     
 
 if __name__ == "__main__":
