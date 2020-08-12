@@ -1,11 +1,7 @@
+import os
 import sys, getopt
 import mysql.connector
 from mysql.connector import Error
-
-sql_host = "",
-sql_user = "",
-sql_password = ""
-sql_database = ""
 
 
 def parse_args(argv):
@@ -14,9 +10,15 @@ def parse_args(argv):
     :param argv:
     :return:
     """
-    global sql_host, sql_password, sql_user, sql_database
+    ret_dict = {
+        "sql_host": "",
+        "sql_user": "",
+        "sql_password": "",
+        "sql_database": "",
+        "path": ""
+    }
     try:
-        opts, args = getopt.getopt(argv, "h:u:p:db", ["host=", "user=", "password=", "database="])
+        opts, args = getopt.getopt(argv, "h:u:pw:db:pa", ["host=", "user=", "password=", "database=", "path="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print("Could not parse program arguments")
@@ -25,26 +27,33 @@ def parse_args(argv):
 
     for opt, arg in opts:
         if opt in ('-h', '--host'):
-            sql_host = arg
-            print("sql_host = {}".format(sql_host))
+            ret_dict["sql_host"] = arg
+            print("sql_host = {}".format(ret_dict["sql_host"]))
         elif opt in ('-u', '--user'):
-            sql_user = arg
-            print("sql_user = {}".format(sql_user))
-        elif opt in ('-p', '--password'):
-            sql_password = arg
-            print("sql_password = {}".format(sql_password))
+            ret_dict["sql_user"] = arg
+            print("sql_user = {}".format(ret_dict["sql_user"]))
+        elif opt in ('-pw', '--password'):
+            ret_dict["sql_password"] = arg
+            print("sql_password = {}".format(ret_dict["sql_password"]))
         elif opt in ('-db', '--database'):
-            sql_database = arg
-            print("sql_database = {}".format(sql_database))
+            ret_dict["sql_database"] = arg
+            print("sql_database = {}".format(ret_dict["sql_database"]))
+        elif opt in ('-pa', '--path'):
+            ret_dict["path"] = arg
+            print("path = {}".format(ret_dict["path"]))
         else:
+            print("Unknown argument {}".format(opt))
             sys.exit(2)
-    if not sql_host or not sql_password or not sql_user or not sql_database:
-        print("Missing command line arguments")
-        sys.exit(2)
+
+    for key, value in ret_dict.items():
+        if not value:
+            print("Missing command line arguments {}".format(key))
+            sys.exit(2)
+    return ret_dict
 
 
-def reset_tables(mydb):
-    mycursor = mydb.cursor()
+def reset_tables(db):
+    mycursor = db.cursor()
 
     sql = "DROP TABLE IF EXISTS count"
     mycursor.execute(sql)
@@ -67,31 +76,49 @@ def reset_tables(mydb):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
+
+def count_char(db, path):
     pass
 
 
+def create_dramas(db, path):
+    mycursor = db.cursor()
+    subfolders = [f.path for f in os.scandir(path) if f.is_dir()]
+    uid = 0
+    for subfolder in subfolders:
+        sql = "INSERT INTO drama (drama_uid, name) VALUES('{uid}','{name}')".format(uid=uid, name=os.path.basename(subfolder))
+        print(sql)
+        mycursor.execute(sql)
+        uid += 1
+    db.commit()
+    print("Inserted {} entries in table drama".format(uid))
+
+
 def main(argv):
-    global sql_host, sql_password, sql_user, sql_database
-    parse_args(argv)
+    args = parse_args(argv)
 
     try:
-        mydb = mysql.connector.connect(
-            host=sql_host,
-            database=sql_database,
-            user=sql_user,
-            password=sql_password,
+        db = mysql.connector.connect(
+            host=args["sql_host"],
+            database=args["sql_database"],
+            user=args["sql_user"],
+            password=args["sql_password"],
         )
     except Error as e:
         print("Error while connecting to MySQL", e)
+        sys.exit(2)
 
-    if mydb.is_connected():
+    if db.is_connected():
         print("Database connection successful")
     else:
         print("Could not connect to database, exiting...")
         sys.exit(2)
 
-    reset_tables(mydb)
-    
+    reset_tables(db)
+
+    create_dramas(db, args["path"])
+    count_char(db, args["path"])
+
 
 if __name__ == "__main__":
     print("DramaCharCount started")
