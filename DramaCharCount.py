@@ -1,7 +1,10 @@
 import os
 import sys, getopt
+import time
+
 import mysql.connector
 from mysql.connector import Error
+from DccUtils import *
 
 
 def parse_args(argv):
@@ -20,7 +23,6 @@ def parse_args(argv):
     try:
         opts, args = getopt.getopt(argv, "h:u:pw:db:pa", ["host=", "user=", "password=", "database=", "path="])
     except getopt.GetoptError as err:
-        # print help information and exit:
         print("Could not parse program arguments")
         print(str(err))  # will print something like "option -a not recognized"
         sys.exit(2)
@@ -55,6 +57,7 @@ def parse_args(argv):
 def reset_tables(db):
     mycursor = db.cursor()
 
+    # drop all tables
     sql = "DROP TABLE IF EXISTS count"
     mycursor.execute(sql)
 
@@ -67,6 +70,7 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS kanji_info"
     mycursor.execute(sql)
 
+    # create tables
     sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
     mycursor.execute(sql)
 
@@ -77,21 +81,51 @@ def reset_tables(db):
     mycursor.execute(sql)
 
 
-def count_char(db, path):
-    pass
-
-
 def create_dramas(db, path):
     mycursor = db.cursor()
-    subfolders = [f.path for f in os.scandir(path) if f.is_dir()]
+    subfolders = get_subfolders(path)
     uid = 0
     for subfolder in subfolders:
         sql = "INSERT INTO drama (drama_uid, name) VALUES('{uid}','{name}')".format(uid=uid, name=os.path.basename(subfolder))
-        print(sql)
         mycursor.execute(sql)
         uid += 1
     db.commit()
     print("Inserted {} entries in table drama".format(uid))
+
+
+def count_char(db, path):
+    mycursor = db.cursor()
+    subfolders = get_subfolders(path)
+    drama_uid = 0
+    chars_uid = {}
+    for subfolder in subfolders:
+        chars = {}
+        print("Processing {subfolder}".format(subfolder=subfolder))
+        # process each file in folder
+        for filepath in get_files(subfolder):
+            with open(filepath, encoding='utf-8') as file:
+                data = file.read()
+                for c in data:
+                    if not c:
+                        # end of file
+                        break
+                    else:
+                        # increment count for this drama
+                        if c in chars:
+                            chars[c] = chars[c] + 1
+                        else:
+                            chars[c] = 1
+                        # verify if this character has a uid
+                        if c not in chars_uid:
+                            chars_uid[c] = len(chars_uid.keys())
+        # update count for this drama
+        for key, value in chars.items():
+            sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES('{kanji_uid}','{drama_uid}','{count}')".format(kanji_uid=chars_uid[key], drama_uid=drama_uid, count=value)
+            mycursor.execute(sql)
+        # go to next drama
+        drama_uid = drama_uid + 1
+    # once all drama have been processed, push to database
+    db.commit()
 
 
 def main(argv):
@@ -116,8 +150,15 @@ def main(argv):
 
     reset_tables(db)
 
+    start_time = time.time()
     create_dramas(db, args["path"])
+    stop_time = time.time()
+    print("create_dramas in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
     count_char(db, args["path"])
+    stop_time = time.time()
+    print("count_char in {:2.3f} seconds".format(stop_time - start_time))
 
 
 if __name__ == "__main__":
