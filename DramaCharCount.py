@@ -160,11 +160,17 @@ def count_char(db, path):
     # upload uids
     sql_inserts = []
     for char, uid in uid_maps["chars_uid"].items():
-        sql_insert = "({},\"{}\")".format(uid, char)
+        sql_insert = "({},\'{}\')".format(uid, char)
         sql_inserts.append(sql_insert)
 
     sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
+    print(sql)
     sql = sql.replace("\"\"\"", "\"\\\"\"", 1)  # replace """ with "\"" as " is a special char in mysql
+    print(sql)
+    sql = sql.replace('\\', '\\\\', 1)  # replace "\" with "\\" as " is a special char in mysql
+    print(sql)
+    sql = sql.replace('\'\'\'', '\'\\\'\'', 1)  # replace "'" with "\'" as ' is a special char in mysql
+    print(sql)
     mycursor.execute(sql)
 
     db.commit()
