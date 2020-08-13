@@ -1,4 +1,5 @@
 import concurrent.futures
+import csv
 import getopt
 import sys
 import threading
@@ -85,6 +86,9 @@ def reset_tables(db):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
+    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT)"
+    mycursor.execute(sql)
+
 
 def create_dramas(db, path):
     global uid_maps
@@ -123,6 +127,7 @@ def count_char_work(folder):
                         else:
                             chars[c] = 1
         # update chars_uid map
+        del chars["\n"]
         chars_uid = uid_maps["chars_uid"]
         drama_uid = uid_maps["drama_uid"][folder]
         sql_inserts = []
@@ -157,11 +162,34 @@ def count_char(db, path):
     for char, uid in uid_maps["chars_uid"].items():
         sql_insert = "({},\"{}\")".format(uid, char)
         sql_inserts.append(sql_insert)
+
     sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
     sql = sql.replace("\"\"\"", "\"\\\"\"", 1)  # replace """ with "\"" as " is a special char in mysql
-    sql = sql.replace("\n", " ", 1)  # replace newline with space to avoid breaking the sql request (cheap workaround)
     mycursor.execute(sql)
 
+    db.commit()
+
+
+def update_kanji_info(db):
+    global uid_maps
+    jlpt_level = {}
+    jouyou_level = {}
+
+    with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
+        for row in csv.reader(csv_file, delimiter=';'):
+            jlpt_level[row[0]] = row[1]
+
+    with open('jouyou_kanji.csv', mode='r', encoding='utf-8') as csv_file:
+        for row in csv.reader(csv_file, delimiter=';'):
+            jouyou_level[row[0]] = row[1]
+
+    sql_inserts = []
+    for value, kanji_uid in uid_maps["chars_uid"].items():
+        sql_insert = "({},{},{})".format(kanji_uid, jlpt_level[value] if value in jlpt_level else 0, jouyou_level[value] if value in jouyou_level else 0)
+        sql_inserts.append(sql_insert)
+    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {}".format(",".join(sql_inserts))
+    mycursor = db.cursor()
+    mycursor.execute(sql)
     db.commit()
 
 
@@ -196,6 +224,11 @@ def main(argv):
     count_char(db, args["path"])
     stop_time = time.time()
     print("count_char in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
+    update_kanji_info(db)
+    stop_time = time.time()
+    print("update_kanji_info in {:2.3f} seconds".format(stop_time - start_time))
 
 
 if __name__ == "__main__":
