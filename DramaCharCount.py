@@ -1,10 +1,15 @@
-import os
-import sys, getopt
+import concurrent.futures
+import getopt
+import sys
+import threading
 import time
 
 import mysql.connector
 from mysql.connector import Error
+
 from DccUtils import *
+
+uid_maps = {}
 
 
 def parse_args(argv):
@@ -82,27 +87,29 @@ def reset_tables(db):
 
 
 def create_dramas(db, path):
+    global uid_maps
+    drama_map = {}
     mycursor = db.cursor()
     subfolders = get_subfolders(path)
     uid = 0
     for subfolder in subfolders:
+        drama_map[subfolder] = uid
         sql = "INSERT INTO drama (drama_uid, name) VALUES('{uid}','{name}')".format(uid=uid, name=os.path.basename(subfolder))
         mycursor.execute(sql)
         uid += 1
     db.commit()
     print("Inserted {} entries in table drama".format(uid))
+    uid_maps["drama_uid"] = drama_map
 
 
-def count_char(db, path):
-    mycursor = db.cursor()
-    subfolders = get_subfolders(path)
-    drama_uid = 0
-    chars_uid = {}
-    for subfolder in subfolders:
+def count_char_work(folder):
+    sql = ""
+    try:
+        global uid_maps
+        print("count_char_work started on {} in thread {}".format(folder, threading.get_ident()))
         chars = {}
-        print("Processing {subfolder}".format(subfolder=subfolder))
-        # process each file in folder
-        for filepath in get_files(subfolder):
+        # count chars
+        for filepath in get_files(folder):
             with open(filepath, encoding='utf-8') as file:
                 data = file.read()
                 for c in data:
@@ -115,16 +122,46 @@ def count_char(db, path):
                             chars[c] = chars[c] + 1
                         else:
                             chars[c] = 1
-                        # verify if this character has a uid
-                        if c not in chars_uid:
-                            chars_uid[c] = len(chars_uid.keys())
-        # update count for this drama
-        for key, value in chars.items():
-            sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES('{kanji_uid}','{drama_uid}','{count}')".format(kanji_uid=chars_uid[key], drama_uid=drama_uid, count=value)
-            mycursor.execute(sql)
-        # go to next drama
-        drama_uid = drama_uid + 1
-    # once all drama have been processed, push to database
+        # update chars_uid map
+        chars_uid = uid_maps["chars_uid"]
+        drama_uid = uid_maps["drama_uid"][folder]
+        sql_inserts = []
+        for char, count in chars.items():
+            if char not in chars_uid:
+                chars_uid[char] = len(chars_uid.keys())
+            sql_insert = "({},{},{})".format(chars_uid[char], drama_uid, count)
+            sql_inserts.append(sql_insert)
+        # use batch insert
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+    except Exception as e:
+        print(e)
+    return sql
+
+
+def count_char(db, path):
+    global uid_maps
+    mycursor = db.cursor()
+    # create char to uid map
+    uid_maps["chars_uid"] = {}
+
+    subfolders = get_subfolders(path)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {}
+        for subfolder in subfolders:
+            futures[subfolder] = executor.submit(count_char_work, subfolder)
+        for future in concurrent.futures.as_completed(futures.values()):
+            mycursor.execute(future.result())
+    # upload uids
+    sql_inserts = []
+    for char, uid in uid_maps["chars_uid"].items():
+        sql_insert = "({},\"{}\")".format(uid, char)
+        sql_inserts.append(sql_insert)
+    sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
+    sql = sql.replace("\"\"\"", "\"\\\"\"", 1)  # replace """ with "\"" as " is a special char in mysql
+    sql = sql.replace("\n", " ", 1)  # replace newline with space to avoid breaking the sql request (cheap workaround)
+    mycursor.execute(sql)
+
     db.commit()
 
 
