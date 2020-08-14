@@ -1,6 +1,7 @@
 import concurrent.futures
 import csv
 import getopt
+import os
 import sys
 import threading
 import time
@@ -9,6 +10,8 @@ import mysql.connector
 from mysql.connector import Error
 
 from DccUtils import *
+
+from python.DccUtils import get_subfolders
 
 uid_maps = {}
 
@@ -95,7 +98,10 @@ def create_dramas(db, path):
     drama_map = {}
     mycursor = db.cursor()
     subfolders = get_subfolders(path)
-    uid = 0
+    # insert dummy drama for all drama together with uid 1
+    sql = "INSERT INTO drama (drama_uid, name) VALUES('1','--> All Dramas Together <--')"
+    mycursor.execute(sql)
+    uid = 2  # uid 0 is reserved for all dramas together
     for subfolder in subfolders:
         drama_map[subfolder] = uid
         sql = "INSERT INTO drama (drama_uid, name) VALUES('{uid}','{name}')".format(uid=uid, name=os.path.basename(subfolder))
@@ -145,18 +151,20 @@ def count_char_work(folder):
 
 def count_char(db, path):
     global uid_maps
-    mycursor = db.cursor()
+    mycursor = db.cursor(dictionary=True)
     # create char to uid map
-    uid_maps["chars_uid"] = {}
+    uid_maps["chars_uid"] = {}  # key = char, value = char_uid
 
     subfolders = get_subfolders(path)
 
+    # count chars in each drama (multithreaded). Each drama uploads its own count in its own thread.
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = {}
         for subfolder in subfolders:
             futures[subfolder] = executor.submit(count_char_work, subfolder)
         for future in concurrent.futures.as_completed(futures.values()):
             mycursor.execute(future.result())
+
     # upload uids
     sql_inserts = []
     for char, uid in uid_maps["chars_uid"].items():
@@ -164,16 +172,30 @@ def count_char(db, path):
         sql_inserts.append(sql_insert)
 
     sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
-    print(sql)
     sql = sql.replace("\"\"\"", "\"\\\"\"", 1)  # replace """ with "\"" as " is a special char in mysql
-    print(sql)
     sql = sql.replace('\\', '\\\\', 1)  # replace "\" with "\\" as " is a special char in mysql
-    print(sql)
     sql = sql.replace('\'\'\'', '\'\\\'\'', 1)  # replace "'" with "\'" as ' is a special char in mysql
+    mycursor.execute(sql)
+    db.commit()
+
+    # upload total count by fetching the count of all dramas, summing the values, the uploading with drama uid 0
+    total_count = {}
+    mycursor.execute("SELECT * FROM count")
+    for result in mycursor.fetchall():
+        kanji_uid = result["kanji_uid"]
+        count = result["count"]
+        if kanji_uid not in total_count:
+            total_count[kanji_uid] = count
+        else:
+            total_count[kanji_uid] = total_count[kanji_uid] + count
+
+    sql_inserts = []
+    for char_uid, count in total_count.items():
+        sql_insert = "({},{},{})".format(char_uid, 1, count)
+        sql_inserts.append(sql_insert)
+    sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
     print(sql)
     mycursor.execute(sql)
-
-    db.commit()
 
 
 def update_kanji_info(db):
