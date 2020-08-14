@@ -1,0 +1,29 @@
+body { 
+}  
+header, footer, article, nav, div {
+  border: 1px solid brown;
+  /*padding: 1.2em;*/
+  /*background: beige;*/
+  }
+  
+#pageHeader {
+  text-align: center;
+  }
+  
+#gui {
+  text-align: center;
+}
+
+input[type=checkbox]{
+  margin-right: 5px;
+}
+  
+#pageFooter {
+  }
+#mainArticle {    
+  }
+#mainNav { 
+  }
+#siteAds { 
+  } 
+}
