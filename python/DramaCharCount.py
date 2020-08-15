@@ -11,9 +11,9 @@ from mysql.connector import Error
 
 from DccUtils import *
 
-from python.DccUtils import get_subfolders
+from python.DccUtils import get_subfolders, get_files
 
-uid_maps = {}
+g_maps = {}
 
 
 def parse_args(argv):
@@ -79,11 +79,23 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS kanji_info"
     mycursor.execute(sql)
 
+    sql = "DROP TABLE IF EXISTS line"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS kanji_to_line"
+    mycursor.execute(sql)
+
     # create tables
     sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE line (line_uid  SMALLINT PRIMARY KEY NOT NULL, value TEXT)"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
@@ -94,7 +106,7 @@ def reset_tables(db):
 
 
 def create_dramas(db, path):
-    global uid_maps
+    global g_maps
     drama_map = {}
     mycursor = db.cursor()
     subfolders = get_subfolders(path)
@@ -109,37 +121,40 @@ def create_dramas(db, path):
         uid += 1
     db.commit()
     print("Inserted {} entries in table drama".format(uid))
-    uid_maps["drama_uid"] = drama_map
+    g_maps["drama_name_to_uid"] = drama_map
 
 
 def count_char_work(folder):
     sql = ""
     try:
-        global uid_maps
+        global g_maps
         print("count_char_work started on {} in thread {}".format(folder, threading.get_ident()))
-        chars = {}
+        chars = {}  # key = char, value = count
+        char_to_line = g_maps["char_to_lines"]
         # count chars
         for filepath in get_files(folder):
             with open(filepath, encoding='utf-8') as file:
-                data = file.read()
-                for c in data:
-                    if not c:
-                        # end of file
-                        break
-                    else:
+                lines = file.readlines()
+                for line in lines:
+                    for c in line:
                         # increment count for this drama
                         if c in chars:
                             chars[c] = chars[c] + 1
                         else:
                             chars[c] = 1
+                        if c not in char_to_line:
+                            char_to_line[c] = []
+                        if len(char_to_line[c]) < 10:
+                            char_to_line[c].append(line)
         # update chars_uid map
         del chars["\n"]
-        chars_uid = uid_maps["chars_uid"]
-        drama_uid = uid_maps["drama_uid"][folder]
+        del char_to_line["\n"]
+        chars_uid = g_maps["char_to_uid"]
+        drama_uid = g_maps["drama_name_to_uid"][folder]
         sql_inserts = []
         for char, count in chars.items():
             if char not in chars_uid:
-                chars_uid[char] = len(chars_uid.keys())
+                chars_uid[char] = len(chars_uid.keys()) + 1
             sql_insert = "({},{},{})".format(chars_uid[char], drama_uid, count)
             sql_inserts.append(sql_insert)
         # use batch insert
@@ -149,16 +164,17 @@ def count_char_work(folder):
     return sql
 
 
-def count_char(db, path):
-    global uid_maps
+def count_and_upload_char(db, path):
+    global g_maps
     mycursor = db.cursor(dictionary=True)
     # create char to uid map
-    uid_maps["chars_uid"] = {}  # key = char, value = char_uid
+    g_maps["char_to_uid"] = {}
+    g_maps["char_to_lines"] = {}
 
     subfolders = get_subfolders(path)
 
     # count chars in each drama (multithreaded). Each drama uploads its own count in its own thread.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         futures = {}
         for subfolder in subfolders:
             futures[subfolder] = executor.submit(count_char_work, subfolder)
@@ -167,7 +183,7 @@ def count_char(db, path):
 
     # upload uids
     sql_inserts = []
-    for char, uid in uid_maps["chars_uid"].items():
+    for char, uid in g_maps["char_to_uid"].items():
         sql_insert = "({},\'{}\')".format(uid, char)
         sql_inserts.append(sql_insert)
 
@@ -178,7 +194,7 @@ def count_char(db, path):
     mycursor.execute(sql)
     db.commit()
 
-    # upload total count by fetching the count of all dramas, summing the values, the uploading with drama uid 0
+    # upload total count by fetching the count of all dramas from database, summing the values, the uploading with drama uid 1
     total_count = {}
     mycursor.execute("SELECT * FROM count")
     for result in mycursor.fetchall():
@@ -194,12 +210,11 @@ def count_char(db, path):
         sql_insert = "({},{},{})".format(char_uid, 1, count)
         sql_inserts.append(sql_insert)
     sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
-    print(sql)
     mycursor.execute(sql)
 
 
 def update_kanji_info(db):
-    global uid_maps
+    global g_maps
     jlpt_level = {}
     jouyou_level = {}
 
@@ -212,13 +227,49 @@ def update_kanji_info(db):
             jouyou_level[row[0]] = row[1]
 
     sql_inserts = []
-    for value, kanji_uid in uid_maps["chars_uid"].items():
+    for value, kanji_uid in g_maps["char_to_uid"].items():
         sql_insert = "({},{},{})".format(kanji_uid, jlpt_level[value] if value in jlpt_level else 0, jouyou_level[value] if value in jouyou_level else 0)
         sql_inserts.append(sql_insert)
     sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {}".format(",".join(sql_inserts))
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
+
+
+def upload_lines(db):
+    global g_maps
+    char_to_line = g_maps["char_to_lines"]
+    char_to_uid = g_maps["char_to_uid"]
+    line_to_uid = {}
+
+    # upload line values
+    for lines in char_to_line.values():
+        for line in lines:
+            if line not in line_to_uid:
+                line_to_uid[line] = len(line_to_uid.keys()) + 1
+
+    sql_inserts = []
+    for line, uid in line_to_uid.items():
+        line = line.replace("\'", "\\'")
+        sql_insert = "({},'{}')".format(uid, line)
+        sql_inserts.append(sql_insert)
+    sql = "INSERT INTO line (line_uid, value) VALUES {}".format(",".join(sql_inserts))
+    sql = sql.replace("\n", "")
+    mycursor = db.cursor()
+    mycursor.execute(sql)
+    db.commit()
+
+    #upload char to line reference
+    sql_inserts = []
+    for char, lines in char_to_line.items():
+        for line in lines:
+            sql_insert = "({},{})".format(char_to_uid[char], line_to_uid[line])
+            sql_inserts.append(sql_insert)
+    sql = "INSERT INTO kanji_to_line (kanji_uid, line_uid) VALUES {}".format(",".join(sql_inserts))
+    mycursor = db.cursor()
+    mycursor.execute(sql)
+    db.commit()
+
 
 
 def main(argv):
@@ -249,9 +300,14 @@ def main(argv):
     print("create_dramas in {:2.3f} seconds".format(stop_time - start_time))
 
     start_time = time.time()
-    count_char(db, args["path"])
+    count_and_upload_char(db, args["path"])
     stop_time = time.time()
     print("count_char in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
+    upload_lines(db)
+    stop_time = time.time()
+    print("upload_lines in {:2.3f} seconds".format(stop_time - start_time))
 
     start_time = time.time()
     update_kanji_info(db)
