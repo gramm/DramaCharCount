@@ -30,7 +30,7 @@ parseGetInfo();
 <div id="pageHeader" class="container">
 	<div class="row">
 		<div class="col align-self-center">
-			<h1>Drama Parser 0.1</h1>
+			<h1>JDramaStuff</h1>
 				What's this?
 				Statistics
 				Roadmap
@@ -43,8 +43,8 @@ parseGetInfo();
 	<div class="row">
 		<div class="col align-self-center">
 	
+	<br />
 	<form action="" method="get">
-	
 	<!-- Drama selection dropdown menu -->
 	<select id="drama" name="drama" onchange="this.form.submit();" >
 	<?php
@@ -66,7 +66,14 @@ parseGetInfo();
 			<td>
 			Hide kanji belonging to JLPT level:<br/>
 			<table class='table table-striped table-sm' border='0'>
-				<tr><td><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="5"  <?php if($filteredJlptKanjiLevelCheckboxes[5]!=0){echo "checked";} ?> ><label> JLPT 5</label>        </td></tr>
+			
+				<tr><td>
+				<div id="button" href="#">
+				<input type="checkbox" class="check">Submit
+				</div>​
+				<input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="5"  <?php if($filteredJlptKanjiLevelCheckboxes[5]!=0){echo "checked";} ?> ><label> JLPT 5</label>        
+				
+				</td></tr>
 				<tr><td><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="4"  <?php if($filteredJlptKanjiLevelCheckboxes[4]!=0){echo "checked";} ?>><label> JLPT 4</label>         </td></tr>
 				<tr><td><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="3"  <?php if($filteredJlptKanjiLevelCheckboxes[3]!=0){echo "checked";} ?>><label> JLPT 3</label>         </td></tr>
 				<tr><td><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="2"  <?php if($filteredJlptKanjiLevelCheckboxes[2]!=0){echo "checked";} ?>><label> JLPT 2</label>         </td></tr>
@@ -243,10 +250,10 @@ function displayWordTable()
 	/* user filter to array with unicode support */
 	$sqlFilteredUserKanji;
 	if(!empty($filteredUserKanji)){
-	$len = mb_strlen($filteredUserKanji, 'UTF-8');
-	$filteredUserKanjiAsArray = [];
-	for ($i = 0; $i < $len; $i++) {
-		$filteredUserKanjiAsArray[] = mb_substr($filteredUserKanji, $i, 1, 'UTF-8');
+		$len = mb_strlen($filteredUserKanji, 'UTF-8');
+		$filteredUserKanjiAsArray = [];
+		for ($i = 0; $i < $len; $i++) {
+			$filteredUserKanjiAsArray[] = mb_substr($filteredUserKanji, $i, 1, 'UTF-8');
 	}
 	
 	/* put '' for SQL search */
@@ -272,6 +279,7 @@ function displayWordTable()
 	ON a.kanji_uid = c.kanji_uid
 	AND c.jlpt NOT IN (".$sqlFilteredJlptKanjiLevel.")
 	AND c.jouyou NOT IN (".$sqlFilteredJouyouKanjiLevel.")
+	AND c.flag IN (1)
 	AND c.kanji_uid NOT IN (".$sqlFilteredUserKanji.")
 	
 	WHERE b.drama_uid = ".$selectedDrama."  
