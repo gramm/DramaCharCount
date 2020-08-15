@@ -2,6 +2,7 @@ import concurrent.futures
 import csv
 import getopt
 import os
+import re
 import sys
 import threading
 import time
@@ -79,6 +80,9 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS kanji_info"
     mycursor.execute(sql)
 
+    sql = "DROP TABLE IF EXISTS kanji_flag"
+    mycursor.execute(sql)
+
     sql = "DROP TABLE IF EXISTS line"
     mycursor.execute(sql)
 
@@ -101,7 +105,13 @@ def reset_tables(db):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
-    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT)"
+    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
+    mycursor.execute(sql)
+
+    sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
     mycursor.execute(sql)
 
 
@@ -218,6 +228,7 @@ def update_kanji_info(db):
     jlpt_level = {}
     jouyou_level = {}
 
+    # update jlpt/joyou levels
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
             jlpt_level[row[0]] = row[1]
@@ -235,6 +246,21 @@ def update_kanji_info(db):
     mycursor.execute(sql)
     db.commit()
 
+    # update kanji flag
+    sql_inserts = []
+    for value, kanji_uid in g_maps["char_to_uid"].items():
+        flag = 0
+        if re.match("[一-龯]", value):
+            flag = 1
+        elif re.match("[ぁ-んァ-ン]", value):
+            flag = 2
+        else:
+            flag = 3
+        # couldnt get multiple statement separated by ; to work, so execute statements one by one instead
+        sql_insert = "UPDATE kanji_info SET flag={} WHERE kanji_uid={}".format(flag, kanji_uid)
+        mycursor = db.cursor()
+        mycursor.execute(sql_insert)
+    db.commit()
 
 def upload_lines(db):
     global g_maps
