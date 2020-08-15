@@ -172,35 +172,19 @@ function displayLines()
 	
 	$start_time = microtime(true); 
 
-	if($selectedDrama>1)
-	{
 	$query = "
 	select a.value
-	from dpdb__line a 
-	INNER JOIN dpdb__kanji_to_line b
-	ON a.uid=b.line_index
-	WHERE (b.kanji_index = ".$selectedWord.") AND (a.drama_index = ".$selectedDrama.")
-	LIMIT 100
+	from line a 
+	INNER JOIN kanji_to_line b
+	ON a.line_uid=b.line_uid
+	WHERE (b.kanji_uid = ".$selectedWord.")
 	";
-	}
-	else{
-	$query = "
-	select a.value
-	from dpdb__line a 
-	INNER JOIN dpdb__kanji_to_line b
-	ON a.uid=b.line_index
-	WHERE (b.kanji_index = ".$selectedWord.")
-		LIMIT 100
-
-	";
-	}
-	
 	$result = mysqli_query($con,$query);
 	
 	
 	$end_time = microtime(true); 
 	$execution_time = ($end_time - $start_time); 
-	echo "displayLines took ".$execution_time." seconds to execute the script"; 
+	//echo "displayLines took ".$execution_time." seconds to execute the script"; 
 	
 	while($row = mysqli_fetch_array($result)){
 		echo $row['value']."<br/>";
