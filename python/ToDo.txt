@@ -1,5 +1,5 @@
 Bugs
 Features
- - improve update_kanji_info(db) to make only one batch sql insert
 Done
+ - improve update_kanji_info(db) to make only one batch sql insert
 Canceled

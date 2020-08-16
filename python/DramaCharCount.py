@@ -184,7 +184,7 @@ def count_and_upload_char(db, path):
     subfolders = get_subfolders(path)
 
     # count chars in each drama (multithreaded). Each drama uploads its own count in its own thread.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = {}
         for subfolder in subfolders:
             futures[subfolder] = executor.submit(count_char_work, subfolder)
@@ -228,7 +228,7 @@ def update_kanji_info(db):
     jlpt_level = {}
     jouyou_level = {}
 
-    # update jlpt/joyou levels
+    # read jlpt/joyou levels
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
             jlpt_level[row[0]] = row[1]
@@ -239,16 +239,8 @@ def update_kanji_info(db):
 
     sql_inserts = []
     for value, kanji_uid in g_maps["char_to_uid"].items():
-        sql_insert = "({},{},{})".format(kanji_uid, jlpt_level[value] if value in jlpt_level else 0, jouyou_level[value] if value in jouyou_level else 0)
-        sql_inserts.append(sql_insert)
-    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {}".format(",".join(sql_inserts))
-    mycursor = db.cursor()
-    mycursor.execute(sql)
-    db.commit()
-
-    # update kanji flag
-    sql_inserts = []
-    for value, kanji_uid in g_maps["char_to_uid"].items():
+        cur_jlpt_level = jlpt_level[value] if value in jlpt_level else 0
+        cur_jouyou_level = jouyou_level[value] if value in jouyou_level else 0
         flag = 0
         if re.match("[一-龯]", value):
             flag = 1
@@ -256,10 +248,11 @@ def update_kanji_info(db):
             flag = 2
         else:
             flag = 3
-        # couldnt get multiple statement separated by ; to work, so execute statements one by one instead
-        sql_insert = "UPDATE kanji_info SET flag={} WHERE kanji_uid={}".format(flag, kanji_uid)
-        mycursor = db.cursor()
-        mycursor.execute(sql_insert)
+        sql_insert = "({},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, flag)
+        sql_inserts.append(sql_insert)
+    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, flag) VALUES {}".format(",".join(sql_inserts))
+    mycursor = db.cursor()
+    mycursor.execute(sql)
     db.commit()
 
 def upload_lines(db):

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <?php
 // Declaration of global variables 
 $allDramas; 
@@ -14,8 +13,11 @@ $filteredUserKanji;
 $wordTable = "hello";
 ?>
 <head>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head> 
 
 <?php
@@ -27,17 +29,11 @@ parseGetInfo();
 ?>
 <body>
 
-<div id="pageHeader" class="container">
-	<div class="row">
-		<div class="col align-self-center">
-			<h1>JDramaStuff</h1>
-				What's this?
-				Statistics
-				Roadmap
-				Contact
-		</div>
-	</div>
-</div>
+<?php
+include('header.php');	
+?>
+
+
 	
 <div id="gui" class="container">
 	<div class="row">
@@ -279,6 +275,7 @@ function displayWordTable()
 	
 	WHERE b.drama_uid = ".$selectedDrama."  
 	ORDER BY `b`.`count` DESC
+	LIMIT 25
 	");
 		
 	
