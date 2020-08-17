@@ -1,24 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</head> 
-
-<body>
-
-<?php
-include('header.php');	
-?>
-
 <div id="gui" class="container">
 	<div class="row">
 		<div class="col align-self-center">
 		<h1>About</h1>
+		
+		<div class="text-left">
 		
 		<h2>Introduction</h2>
 		<p>
@@ -34,6 +19,8 @@ include('header.php');
 		
 		<br /><br />
 		I thought that maybe someday I could share this software, but nowadays it's all about web applications, python libraries and sharing your stuff on github, and so here we are!
+		<br />
+		Hopefully this resource will help you improve your japanese and let you enjoy japanese drama even more !
 		<h2>Sources</h2>
 		The sources of both the website and the python script to parse subtitles are available on GitHub at <a href="https://github.com/gramm/DramaCharCount">https://github.com/gramm/DramaCharCount</a>
 		<br />
@@ -44,8 +31,6 @@ include('header.php');
 		-->
 		</p>
 		</div>
+		</div>
 	</div>
 </div>
-		
-
-</body>

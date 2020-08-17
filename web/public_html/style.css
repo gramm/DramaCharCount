@@ -1,10 +1,14 @@
 body { 
 }  
-header, footer, article, nav, div {
-  border: 1px solid brown;
+header, article, nav, div {
+  /* border: 1px solid brown; */
   /*padding: 1.2em;*/
   /*background: beige;*/
   }
+
+.footer-text{
+	 white-space: pre; 
+}
   
 #pageHeader {
   text-align: center;

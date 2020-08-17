@@ -1,8 +1,7 @@
-<footer class="footer font-small bg-light navbar-light">
-  <div class="container text-center">
-	Website by Maxence Delattre | All rights reserved | <a href="jdramastuff.xyz">jdramastuff.xyz</a> | 
-	
-<script type="text/javascript" language="javascript">
+<br />
+<footer class="mt-auto font-small bg-light navbar-light">
+
+<div class="container text-center footer-text">  Website by Maxence Delattre    |    All rights reserved    |    <a href="jdramastuff.xyz">jdramastuff.xyz</a>    |    <script type="text/javascript" language="javascript">
 <!--
 // Email obfuscator script 2.1 by Tim Williams, University of Arizona
 // Random encryption key feature coded by Andrew Moulden
@@ -24,10 +23,6 @@
   }
 document.write("<a href='mailto:"+link+"'>info@jdramastuff.xyz</a>")
 }
-//-->
-</script><noscript>Mail at "info" on this domain.</noscript>
+</script><noscript>Mail at "info" on this domain.</noscript></div>
 
-
-
-  </div>
 </footer>

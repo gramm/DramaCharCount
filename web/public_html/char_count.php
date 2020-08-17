@@ -232,7 +232,7 @@ function displayWordTable()
 	
 	echo "<a href=\"#\" onclick=\"doCsv()\">Export as CSV</a><br/>";
 	//echo "Hint: to open in Excel copy-paste the CSV content directly into Excel<br/>";
-	
+	echo "<br />";
 	$sqlFilteredJlptKanjiLevel = implode(",",$filteredJlptKanjiLevel)/* for example "5,4" if jlpt 5 and 4 filtered */;
 	$sqlFilteredJouyouKanjiLevel = implode(",",$filteredJouyouKanjiLevel)/* for example "5,4" if jlpt 5 and 4 filtered */;
 	
@@ -281,7 +281,7 @@ function displayWordTable()
 	
 	//do word table
 	
-	echo "<table class='table table-striped table-sm' border='1'>
+	echo "<table class='table table-bordered table-striped table-sm'>
 		<tr>
 			<th>Word</th>
 			<th>Count</th>
