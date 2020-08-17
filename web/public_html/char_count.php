@@ -114,7 +114,7 @@ parseGetInfo();
 	
 	if(is_null($selectedWord))
 	{
-		echo "No kanji selected.";
+		echo "<div class=\"text-center\">No kanji selected.</div>";
 	}
 	else
 	{

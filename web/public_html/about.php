@@ -1,10 +1,8 @@
 <div id="gui" class="container">
 	<div class="row">
 		<div class="col align-self-center">
-		<h1>About</h1>
-		
-		<div class="text-left">
-		
+		<div class="text-left blabla">
+		<br />
 		<h2>Introduction</h2>
 		<p>
 		Welcome to JDramaStuff! My name is Maxence Delattre, I am a software engineer with a passion for foreign languages. 
@@ -14,11 +12,12 @@
 		By doing this, I avoid spending time on learning words which are almost never used.
 		
 		<br /><br />
-		The software is written in Java, uses Kuromoji as tokenizer, and currently looks like this:
+		The software is written in Java, uses Kuromoji as tokenizer, and well, it works but doesn't look very modern:
+		<br /><br />
 		<img src="img/ss_MyDramaWordList.png" />
 		
 		<br /><br />
-		I thought that maybe someday I could share this software, but nowadays it's all about web applications, python libraries and sharing your stuff on github, and so here we are!
+		I wanted to share this program eventually, but nowadays it's all about web applications, python libraries and sharing your stuff on github, and so here we are!
 		<br />
 		Hopefully this resource will help you improve your japanese and let you enjoy japanese drama even more !
 		<h2>Sources</h2>
