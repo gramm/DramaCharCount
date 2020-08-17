@@ -26,7 +26,7 @@ parseGetInfo();
 	
 	<br />
 	<form action="" method="get">
-	<div class="text-left">
+	<div class="text-left blabla help">
 		<!-- Introduction text -->
 		Here you can see a ranking of the most used kanji for a specific JDrama, or between all JDrama alltogether.
 		<br /> 
@@ -100,7 +100,7 @@ parseGetInfo();
 	
 	
 	
-	
+	<hr/><br />
 	<div id="mainNav" class="container">
 	<div class="row">
 		<div class="col align-self-center">
@@ -108,8 +108,7 @@ parseGetInfo();
 		displayWordTable();
 	?>
 		</div>
-	<div class="col align-self-top">
-
+	<div class="col align-self-top text-left">
 	<?php
 	GLOBAL $selectedWord;
 	
@@ -184,12 +183,13 @@ function displayLines()
 	$end_time = microtime(true); 
 	$execution_time = ($end_time - $start_time); 
 	//echo "displayLines took ".$execution_time." seconds to execute the script"; 
-	
+	echo "<br/>";
+	echo "<br/>";
 	while($row = mysqli_fetch_array($result)){
 		echo $row['value']."<br/>";
 	}
 		echo "<br/>";
-		echo "Line display limited to 100 results. <br/>";
+		echo "Line display limited to 10 results for the moment. <br/>";
 	
 	mysqli_close($con);
 }
@@ -274,7 +274,7 @@ function displayWordTable()
 	
 	WHERE b.drama_uid = ".$selectedDrama."  
 	ORDER BY `b`.`count` DESC
-	LIMIT 25
+	LIMIT 100
 	");
 		
 	
@@ -290,9 +290,10 @@ function displayWordTable()
 		</tr>";
 
 		$wordTable = "";
+		$ctr=0;
 		while($row = mysqli_fetch_array($result))
 		{
-			
+			$ctr=$ctr+1;
 			$wordTable = $wordTable.$row['value'].'\t';
 			$wordTable = $wordTable.$row['count'].'\t';
 			$wordTable = $wordTable.$row['jlpt'].'\t';
@@ -309,6 +310,9 @@ function displayWordTable()
 			echo "</tr>";
 		}
 	echo "</table>";
+	if($ctr == 100){
+		echo "Kanji display limited to maximum 100 results for the moment.";
+	}
 }
 
 function getDramaList()

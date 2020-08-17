@@ -1,5 +1,10 @@
+html{
+	font-family: Alegreya, Georgia, serif;
+}
+
 body { 
 }  
+
 header, article, nav, div {
   /* border: 1px solid brown; */
   /*padding: 1.2em;*/
@@ -30,4 +35,20 @@ input[type=checkbox]{
   }
 #siteAds { 
   } 
+
+.blabla{
+	font-size:20px;
+    font-family: Alegreya, Georgia, serif;
+
+}
+
+.help{
+	background-color: #f8f8ff;
+	padding: 5px;
+	
+    border: blue;
+    border-style: dashed;
+    border-width: 1px;
+    border-radius: 10px;
+
 }
