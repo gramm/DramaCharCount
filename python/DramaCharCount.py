@@ -6,15 +6,23 @@ import re
 import sys
 import threading
 import time
+import traceback
 
 import mysql.connector
 from mysql.connector import Error
 
-from DccUtils import *
 
 from python.DccUtils import get_subfolders, get_files
 
 g_maps = {}
+
+
+def exception(e):
+    if hasattr(e, 'message'):
+        print(e.message)
+    else:
+        print(e)
+    traceback.print_exc()
 
 
 def parse_args(argv):
@@ -134,8 +142,9 @@ def create_dramas(db, path):
     g_maps["drama_name_to_uid"] = drama_map
 
 
-def count_char_work(folder):
+def count_char_work(folder, lock):
     sql = ""
+
     try:
         global g_maps
         print("count_char_work started on {} in thread {}".format(folder, threading.get_ident()))
@@ -147,35 +156,52 @@ def count_char_work(folder):
                 lines = file.readlines()
                 for line in lines:
                     for c in line:
-                        # increment count for this drama
-                        if c in chars:
-                            chars[c] = chars[c] + 1
-                        else:
-                            chars[c] = 1
-                        if c not in char_to_line:
-                            char_to_line[c] = []
-                        if len(char_to_line[c]) < 10:
-                            char_to_line[c].append(line)
+
+                        try:
+                            # increment count for this drama
+                            if c in chars:
+                                chars[c] = chars[c] + 1
+                            else:
+                                chars[c] = 1
+                            if c not in char_to_line:
+                                with lock:
+                                    if c not in char_to_line:  # map might have been concurrently changed since test
+                                        char_to_line[c] = []
+                            if len(char_to_line[c]) < 10:
+                                with lock:
+                                    if len(char_to_line[c]) < 10:  # map might have been concurrently changed since test
+                                        char_to_line[c].append(line)
+                        except Exception as e:
+                            exception(e)
         # update chars_uid map
-        del chars["\n"]
-        del char_to_line["\n"]
+        if "\n" in chars:
+            del chars["\n"]
         chars_uid = g_maps["char_to_uid"]
         drama_uid = g_maps["drama_name_to_uid"][folder]
         sql_inserts = []
+
         for char, count in chars.items():
             if char not in chars_uid:
-                chars_uid[char] = len(chars_uid.keys()) + 1
+                with lock:
+                    if char not in chars_uid:
+                        chars_uid[char] = len(chars_uid.keys()) + 1
             sql_insert = "({},{},{})".format(chars_uid[char], drama_uid, count)
             sql_inserts.append(sql_insert)
+
+        for char, count in chars.items():
+            if char not in chars_uid:
+                raise Exception('char not in uid : ')
         # use batch insert
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
     except Exception as e:
-        print(e)
+        exception(e)
+    print("count_char_work exited on {} in thread {}".format(folder, threading.get_ident()))
     return sql
 
 
 def count_and_upload_char(db, path):
     global g_maps
+    lock = threading.Lock()
     mycursor = db.cursor(dictionary=True)
     # create char to uid map
     g_maps["char_to_uid"] = {}
@@ -187,11 +213,17 @@ def count_and_upload_char(db, path):
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = {}
         for subfolder in subfolders:
-            futures[subfolder] = executor.submit(count_char_work, subfolder)
+            futures[subfolder] = executor.submit(count_char_work, subfolder, lock)
         for future in concurrent.futures.as_completed(futures.values()):
-            mycursor.execute(future.result())
+            sql = future.result()
+            try:
+                mycursor.execute(sql)
+            except Exception as e:
+                print(sql)
+                exception(e)
 
     # upload uids
+    print("".join(g_maps["char_to_uid"].keys()))
     sql_inserts = []
     for char, uid in g_maps["char_to_uid"].items():
         sql_insert = "({},\'{}\')".format(uid, char)
@@ -255,6 +287,7 @@ def update_kanji_info(db):
     mycursor.execute(sql)
     db.commit()
 
+
 def upload_lines(db):
     global g_maps
     char_to_line = g_maps["char_to_lines"]
@@ -269,18 +302,32 @@ def upload_lines(db):
 
     sql_inserts = []
     for line, uid in line_to_uid.items():
+        line = line.replace("\\", "\\\\'")
         line = line.replace("\'", "\\'")
+        line = line.replace("\"", "\\\"")
         sql_insert = "({},'{}')".format(uid, line)
         sql_inserts.append(sql_insert)
-    sql = "INSERT INTO line (line_uid, value) VALUES {}".format(",".join(sql_inserts))
-    sql = sql.replace("\n", "")
-    mycursor = db.cursor()
-    mycursor.execute(sql)
-    db.commit()
+        # this request will be probably be over max_allowed_packet, so we update by batches of 5000 kanji
+        if len(sql_inserts) > 5000:
+            sql = "INSERT INTO line (line_uid, value) VALUES {}".format(",".join(sql_inserts))
+            sql = sql.replace("\n", "")
+            print(sql)
+            mycursor = db.cursor()
+            mycursor.execute(sql)
+            db.commit()
+            sql_inserts.clear()
+    if len(sql_inserts) > 0:
+        sql = "INSERT INTO line  (line_uid, value) VALUES {}".format(",".join(sql_inserts))
+        sql = sql.replace("\n", "")
+        mycursor = db.cursor()
+        mycursor.execute(sql)
+        db.commit()
 
-    #upload char to line reference
+    # upload char to line reference
     sql_inserts = []
     for char, lines in char_to_line.items():
+        if char is "\n":
+            continue
         for line in lines:
             sql_insert = "({},{})".format(char_to_uid[char], line_to_uid[line])
             sql_inserts.append(sql_insert)
@@ -288,7 +335,6 @@ def upload_lines(db):
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
-
 
 
 def main(argv):

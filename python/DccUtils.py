@@ -1,5 +1,4 @@
 import os
-from os.path import isfile
 
 
 def get_subfolders(path):
@@ -7,9 +6,8 @@ def get_subfolders(path):
 
 
 def get_files(path):
-    ret_list = []
-    for f in os.listdir(path):
-        fullpath = os.path.join(path, f)
-        if isfile(fullpath):
-            ret_list.append(fullpath)
-    return ret_list
+    retlist = []
+    for root, subFolder, files in os.walk(path):
+        for item in files:
+            retlist.append((os.path.join(root, item)))
+    return retlist

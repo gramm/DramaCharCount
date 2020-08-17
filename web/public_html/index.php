@@ -41,7 +41,20 @@ include('header.php');
 	
 	<br />
 	<form action="" method="get">
+	<div class="text-left">
+		<!-- Introduction text -->
+		Here you can see a ranking of the most used kanji for a specific JDrama, or between all JDrama alltogether.
+		<br /> 
+		You can also filter (hide) kanji belonging to a certain JLPT or jōyō level, and also simply filter whatever kanji you want by writing it in the text box.
+		<br /> 
+		Finally, you can click any kanji to show some example of sentences using this kanji.
+		<br /> 
+		Have fun!
+		<br /> 
+	</div>
+	<div class="intro">
 	<!-- Drama selection dropdown menu -->
+	<br />
 	<select id="drama" name="drama" onchange="this.form.submit();" >
 	<?php
 		GLOBAL $allDramas;
@@ -98,7 +111,7 @@ include('header.php');
 	</form>
 		</div>
 	</div>
-</div>
+	</div>
 	
 	
 	
@@ -135,6 +148,12 @@ include('header.php');
 	</div>
 	</div>
 	
+		
+	</div>
+	<?php
+	include('footer.php');	
+	?>
+
 	<script language='javascript'>
 	
 	function doCsv() {
@@ -232,7 +251,7 @@ function displayWordTable()
 
 	
 	echo "<a href=\"#\" onclick=\"doCsv()\">Export as CSV</a><br/>";
-	echo "Hint: to open in Excel copy-paste the CSV content directly into Excel<br/>";
+	//echo "Hint: to open in Excel copy-paste the CSV content directly into Excel<br/>";
 	
 	$sqlFilteredJlptKanjiLevel = implode(",",$filteredJlptKanjiLevel)/* for example "5,4" if jlpt 5 and 4 filtered */;
 	$sqlFilteredJouyouKanjiLevel = implode(",",$filteredJouyouKanjiLevel)/* for example "5,4" if jlpt 5 and 4 filtered */;
