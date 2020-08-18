@@ -24,6 +24,10 @@
 		The sources of both the website and the python script to parse subtitles are available on GitHub at <a href="https://github.com/gramm/DramaCharCount">https://github.com/gramm/DramaCharCount</a>
 		<br />
 		The subtitles were all gathered from the JPSubbers website, currently at <a href="http://jpsubbers.xyz/">http://jpsubbers.xyz/</a>
+		<br />
+		The JLPT levels were downloaded from <a href="http://www.tanos.co.uk/jlpt/">http://www.tanos.co.uk/jlpt/</a>. Note that there is no official list of kanji or vocabulary, therefore one should not trust
+		this list (or any other) too much.
+		
 		<!--
 		<h2>Tokenization method</h2>
 		The python script relies 

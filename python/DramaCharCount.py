@@ -223,7 +223,6 @@ def count_and_upload_char(db, path):
                 exception(e)
 
     # upload uids
-    print("".join(g_maps["char_to_uid"].keys()))
     sql_inserts = []
     for char, uid in g_maps["char_to_uid"].items():
         sql_insert = "({},\'{}\')".format(uid, char)
@@ -253,6 +252,17 @@ def count_and_upload_char(db, path):
         sql_inserts.append(sql_insert)
     sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
     mycursor.execute(sql)
+
+    # csv output (optional)
+    uid_to_char = {}
+    for char, uid in g_maps["char_to_uid"].items():
+        uid_to_char[uid] = char
+    f = open('C:/Users/Max/Documents/_tmp/count.csv', 'w', encoding="utf-8", newline='')
+    with f:
+        writer = csv.writer(f)
+        for char_uid, count in total_count.items():
+            if re.match("[一-龯]", uid_to_char[char_uid]):
+                writer.writerow([uid_to_char[char_uid], count])
 
 
 def update_kanji_info(db):
@@ -311,7 +321,6 @@ def upload_lines(db):
         if len(sql_inserts) > 5000:
             sql = "INSERT INTO line (line_uid, value) VALUES {}".format(",".join(sql_inserts))
             sql = sql.replace("\n", "")
-            print(sql)
             mycursor = db.cursor()
             mycursor.execute(sql)
             db.commit()

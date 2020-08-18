@@ -14,7 +14,11 @@ header, article, nav, div {
 .footer-text{
 	 white-space: pre; 
 }
+.navbar{
+	 /*border: 1px solid brown;*/
+}
   
+
 #pageHeader {
   text-align: center;
   }
@@ -51,4 +55,8 @@ input[type=checkbox]{
     border-width: 1px;
     border-radius: 10px;
 
+}
+
+.menu-button{
+    border-radius: 10px;
 }

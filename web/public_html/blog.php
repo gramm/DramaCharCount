@@ -1,34 +1,27 @@
 <?php
-	if(empty($_GET["blog"]))
+	if(empty($_GET["article"]))
 	{
-		$page="404.php";
+		$article="404";
 	}
 	else
 	{
-		$page=$_GET["blog"];
+		$article=$_GET["article"];
 	}
 ?>
 <br />
 <div id="gui" class="container  ">
 	<div class="row ">
-		<!-- A vertical navbar -->
-		<nav class="navbar bg-light navbar-light ">
+		<nav class="navbar bg-light navbar-light flex-column col-sm-2 ">
 			<!-- Links -->
-			<ul class="navbar-nav">
-				<li class="nav-item">
-					<a class="nav-link" href="#">Link 1</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="#">Link 2</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="#">Link 3</a>
+			<ul class="navbar-nav w-100 ">
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button p-2" href="?page=blog.php&article=kanji-frequency-in-every-drama">Complete list of kanji</a>
 				</li>
 			</ul>
 		</nav>
 		<div class="col ">
 			<?php
-			include($page);	
+			include("blog/".$article . ".php");	
 			?>
 		</div>
 	</div>

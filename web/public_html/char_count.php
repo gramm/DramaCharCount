@@ -58,30 +58,30 @@ parseGetInfo();
 	<table class='table' >
 		<tr>
 			<td>
-			Hide kanji belonging to JLPT level:<br/>
+			<a href="#" data-toggle="tooltip" title="Note that there is no official JLPT list! This list comes from http://www.tanos.co.uk/jlpt/">⚠</a>Hide kanji belonging to JLPT level:<br/>
 			<table class='table table-striped table-bordered table-sm' style="height: 100px;">
 			
 			</label>
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="5"  <?php if($filteredJlptKanjiLevelCheckboxes[5]!=0){echo "checked";} ?>> JLPT 5</label>        </td></tr>
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="4"  <?php if($filteredJlptKanjiLevelCheckboxes[4]!=0){echo "checked";} ?>> JLPT 4</label>         </td></tr>
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="3"  <?php if($filteredJlptKanjiLevelCheckboxes[3]!=0){echo "checked";} ?>> JLPT 3</label>         </td></tr>
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="2"  <?php if($filteredJlptKanjiLevelCheckboxes[2]!=0){echo "checked";} ?>> JLPT 2</label>         </td></tr>
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="1"  <?php if($filteredJlptKanjiLevelCheckboxes[1]!=0){echo "checked";} ?>> JLPT 1</label>         </td></tr>	
-				<tr><td><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="0"  <?php if($filteredJlptKanjiLevelCheckboxes[0]!=0){echo "checked";} ?>> Not in JLPT</label>    </td></tr>
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="5"  <?php if($filteredJlptKanjiLevelCheckboxes[5]!=0){echo "checked";} ?>> JLPT 5</label>        </td></tr>
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="4"  <?php if($filteredJlptKanjiLevelCheckboxes[4]!=0){echo "checked";} ?>> JLPT 4</label>         </td></tr>
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="3"  <?php if($filteredJlptKanjiLevelCheckboxes[3]!=0){echo "checked";} ?>> JLPT 3</label>         </td></tr>
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="2"  <?php if($filteredJlptKanjiLevelCheckboxes[2]!=0){echo "checked";} ?>> JLPT 2</label>         </td></tr>
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="1"  <?php if($filteredJlptKanjiLevelCheckboxes[1]!=0){echo "checked";} ?>> JLPT 1</label>         </td></tr>	
+				<tr><td ><label ><input class="checkbox" type="checkbox" name="jlpt_kanji_list[]" value="0"  <?php if($filteredJlptKanjiLevelCheckboxes[0]!=0){echo "checked";} ?>> Not in JLPT</label>    </td></tr>
 			</table>	
 			</td>
 			<td>
 				<table class='table table-striped table-bordered table-sm' border='0'>
 				Hide kanji belonging to jōyō level:<br/>
 				
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="7"  <?php if($filteredJouyouKanjiLevelCheckboxes[7]!=0){echo "checked";} ?> > Secondary school</label></td></tr>	
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="6"  <?php if($filteredJouyouKanjiLevelCheckboxes[6]!=0){echo "checked";} ?> > 6th grade</label>	      </td></tr>
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="5"  <?php if($filteredJouyouKanjiLevelCheckboxes[5]!=0){echo "checked";} ?> > 5th grade</label>       </td></tr>
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="4"  <?php if($filteredJouyouKanjiLevelCheckboxes[4]!=0){echo "checked";} ?>>  4th grade</label>        </td></tr>
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="3"  <?php if($filteredJouyouKanjiLevelCheckboxes[3]!=0){echo "checked";} ?>>  3rd grade</label>        </td></tr>
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="2"  <?php if($filteredJouyouKanjiLevelCheckboxes[2]!=0){echo "checked";} ?>>  2nd grade</label>        </td></tr>
 				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="1"  <?php if($filteredJouyouKanjiLevelCheckboxes[1]!=0){echo "checked";} ?>>  1st grade</label>        </td></tr>
-				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="0"  <?php if($filteredJouyouKanjiLevelCheckboxes[0]!=0){echo "checked";} ?>>  Not in jōyō</label>      </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="2"  <?php if($filteredJouyouKanjiLevelCheckboxes[2]!=0){echo "checked";} ?>>  2nd grade</label>        </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="3"  <?php if($filteredJouyouKanjiLevelCheckboxes[3]!=0){echo "checked";} ?>>  3rd grade</label>        </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="4"  <?php if($filteredJouyouKanjiLevelCheckboxes[4]!=0){echo "checked";} ?>>  4th grade</label>        </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="5"  <?php if($filteredJouyouKanjiLevelCheckboxes[5]!=0){echo "checked";} ?> > 5th grade</label>       </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="6"  <?php if($filteredJouyouKanjiLevelCheckboxes[6]!=0){echo "checked";} ?> > 6th grade</label>	      </td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="7"  <?php if($filteredJouyouKanjiLevelCheckboxes[7]!=0){echo "checked";} ?> > Secondary school</label></td></tr>
+				<tr><td><label><input type="checkbox" name="jouyou_kanji_list[]" value="0"  <?php if($filteredJouyouKanjiLevelCheckboxes[0]!=0){echo "checked";} ?>>  Not in jōyō</label>      </td></tr>	
 				</table>
 			</td>
 		</tr>
@@ -407,5 +407,10 @@ function parseGetInfo()
 
 ?>
 
+<script>
+$(document).ready(function(){
+  $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
 
 </html>
