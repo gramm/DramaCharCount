@@ -11,10 +11,13 @@ import traceback
 import mysql.connector
 from mysql.connector import Error
 
-
 from python.DccUtils import get_subfolders, get_files
 
 g_maps = {}
+
+
+def is_kanji(c):
+    return re.match("[一-龯]", c)
 
 
 def exception(e):
@@ -113,7 +116,7 @@ def reset_tables(db):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
-    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
+    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
@@ -177,6 +180,7 @@ def count_char_work(folder, lock):
         if "\n" in chars:
             del chars["\n"]
         chars_uid = g_maps["char_to_uid"]
+        uid_char = g_maps["uid_to_char"]
         drama_uid = g_maps["drama_name_to_uid"][folder]
         sql_inserts = []
 
@@ -185,6 +189,7 @@ def count_char_work(folder, lock):
                 with lock:
                     if char not in chars_uid:
                         chars_uid[char] = len(chars_uid.keys()) + 1
+                        uid_char[chars_uid[char]] = char
             sql_insert = "({},{},{})".format(chars_uid[char], drama_uid, count)
             sql_inserts.append(sql_insert)
 
@@ -205,7 +210,9 @@ def count_and_upload_char(db, path):
     mycursor = db.cursor(dictionary=True)
     # create char to uid map
     g_maps["char_to_uid"] = {}
+    g_maps["uid_to_char"] = {}
     g_maps["char_to_lines"] = {}
+    g_maps["char_uid_to_count"] = {}
 
     subfolders = get_subfolders(path)
 
@@ -236,7 +243,7 @@ def count_and_upload_char(db, path):
     db.commit()
 
     # upload total count by fetching the count of all dramas from database, summing the values, the uploading with drama uid 1
-    total_count = {}
+    total_count = g_maps["char_uid_to_count"]
     mycursor.execute("SELECT * FROM count")
     for result in mycursor.fetchall():
         kanji_uid = result["kanji_uid"]
@@ -246,29 +253,31 @@ def count_and_upload_char(db, path):
         else:
             total_count[kanji_uid] = total_count[kanji_uid] + count
 
+    sorted(total_count.items(), key=lambda x: x[1], reverse=True)  # sort total_count by values descencding i.e. by count
+
     sql_inserts = []
     for char_uid, count in total_count.items():
         sql_insert = "({},{},{})".format(char_uid, 1, count)
         sql_inserts.append(sql_insert)
     sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
     mycursor.execute(sql)
-
-    # csv output (optional)
-    uid_to_char = {}
-    for char, uid in g_maps["char_to_uid"].items():
-        uid_to_char[uid] = char
-    f = open('C:/Users/Max/Documents/_tmp/count.csv', 'w', encoding="utf-8", newline='')
-    with f:
-        writer = csv.writer(f)
-        for char_uid, count in total_count.items():
-            if re.match("[一-龯]", uid_to_char[char_uid]):
-                writer.writerow([uid_to_char[char_uid], count])
+    ## csv output (optional)
+    # uid_to_char = {}
+    # for char, uid in g_maps["char_to_uid"].items():
+    #    uid_to_char[uid] = char
+    # f = open('C:/Users/Max/Documents/_tmp/count.csv', 'w', encoding="utf-8", newline='')
+    # with f:
+    #    writer = csv.writer(f)
+    #    for char_uid, count in total_count.items():
+    #        if re.match("[一-龯]", uid_to_char[char_uid]):
+    #            writer.writerow([uid_to_char[char_uid], count])
 
 
 def update_kanji_info(db):
     global g_maps
     jlpt_level = {}
     jouyou_level = {}
+    total_count = g_maps["char_uid_to_count"]
 
     # read jlpt/joyou levels
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
@@ -279,20 +288,47 @@ def update_kanji_info(db):
         for row in csv.reader(csv_file, delimiter=';'):
             jouyou_level[row[0]] = row[1]
 
+    # create JDPT ranking
+    jdpt_count = {}
+    jdpt_level = {}
+    for value in jlpt_level.values():
+        value = int(value)
+        if value not in jdpt_count:
+            jdpt_count[value] = 1
+        else:
+            jdpt_count[value] += 1
+
+    # create count
+    total_count = g_maps["char_uid_to_count"]
+    cur_jdpt_level = len(jdpt_count)
+    counter = 0
+    for char_uid in sorted(total_count, key=total_count.get, reverse=True):
+        if not is_kanji(g_maps["uid_to_char"][char_uid]):
+            continue
+        jdpt_level[char_uid] = cur_jdpt_level
+        counter += 1
+        if cur_jdpt_level > 0:
+            if counter >= jdpt_count[cur_jdpt_level]:
+                counter = 0
+                cur_jdpt_level -= 1
+        if cur_jdpt_level == 5:
+            print(g_maps["uid_to_char"][char_uid] + " " + str(total_count[char_uid]))
+
     sql_inserts = []
     for value, kanji_uid in g_maps["char_to_uid"].items():
         cur_jlpt_level = jlpt_level[value] if value in jlpt_level else 0
         cur_jouyou_level = jouyou_level[value] if value in jouyou_level else 0
+        cur_jdpt_level = jdpt_level[value] if value in jdpt_level else 0
         flag = 0
-        if re.match("[一-龯]", value):
+        if is_kanji(value):
             flag = 1
         elif re.match("[ぁ-んァ-ン]", value):
             flag = 2
         else:
             flag = 3
-        sql_insert = "({},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, flag)
+        sql_insert = "({},{},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, flag)
         sql_inserts.append(sql_insert)
-    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, flag) VALUES {}".format(",".join(sql_inserts))
+    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, jdpt, flag) VALUES {}".format(",".join(sql_inserts))
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
