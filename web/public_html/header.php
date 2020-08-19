@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.7.3/dist/Chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
 
 <nav class="navbar navbar-expand-sm bg-light navbar-light justify-content-center" >
 	<a class="navbar-brand" href="index.php">JDramaStuff</a>
