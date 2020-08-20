@@ -14,8 +14,6 @@ def get_files(path):
 
 
 def escape_sql(sql):
-    if 'proud' in sql:
-        print(sql)
     chars = ['\\', '\'', '\"']
     for c in chars:
         sql = sql.replace(c, '\\'+c)

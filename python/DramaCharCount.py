@@ -270,20 +270,26 @@ def count_and_upload_char(db, path):
     #            writer.writerow([uid_to_char[char_uid], count])
 
 
+def write_kanji_distance(db):
+    pass
+
+
 def update_kanji_info(db):
     global g_maps
+    char_to_uid = g_maps["char_to_uid"]
     jlpt_level = {}
     jouyou_level = {}
-    total_count = g_maps["char_uid_to_count"]
 
     # read jlpt/joyou levels
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
-            jlpt_level[row[0]] = row[1]
+            if row[0] in char_to_uid:
+                jlpt_level[char_to_uid[row[0]]] = row[1]
 
     with open('jouyou_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
-            jouyou_level[row[0]] = row[1]
+            if row[0] in char_to_uid:
+                jouyou_level[char_to_uid[row[0]]] = row[1]
 
     # create JDPT ranking
     jdpt_count = {}
@@ -308,14 +314,12 @@ def update_kanji_info(db):
             if counter >= jdpt_count[cur_jdpt_level]:
                 counter = 0
                 cur_jdpt_level -= 1
-        if cur_jdpt_level == 5:
-            print(g_maps["uid_to_char"][char_uid] + " " + str(total_count[char_uid]))
 
     sql_inserts = []
     for value, kanji_uid in g_maps["char_to_uid"].items():
-        cur_jlpt_level = jlpt_level[value] if value in jlpt_level else 0
-        cur_jouyou_level = jouyou_level[value] if value in jouyou_level else 0
-        cur_jdpt_level = jdpt_level[value] if value in jdpt_level else 0
+        cur_jlpt_level = jlpt_level[kanji_uid] if kanji_uid in jlpt_level else 0
+        cur_jouyou_level = jouyou_level[kanji_uid] if kanji_uid in jouyou_level else 0
+        cur_jdpt_level = jdpt_level[kanji_uid] if kanji_uid in jdpt_level else 0
         flag = 0
         if is_kanji(value):
             flag = 1
@@ -329,6 +333,12 @@ def update_kanji_info(db):
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
+
+    #update dict
+    g_maps["char_uid_to_jlpt"] = jlpt_level
+    g_maps["char_uid_to_jdpt"] = jdpt_level
+    g_maps["char_uid_to_jouyou"] = jouyou_level
+
 
 
 def upload_lines(db):
@@ -345,9 +355,7 @@ def upload_lines(db):
 
     sql_inserts = []
     for line, uid in line_to_uid.items():
-        print(line)
         line = escape_sql(line)
-        print(line)
         sql_insert = "({},'{}')".format(uid, line)
         sql_inserts.append(sql_insert)
         # this request will be probably be over max_allowed_packet, so we update by batches of 5000 kanji
@@ -377,6 +385,8 @@ def upload_lines(db):
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
+
+
 
 
 def main(argv):
@@ -421,6 +431,11 @@ def main(argv):
     stop_time = time.time()
     print("update_kanji_info in {:2.3f} seconds".format(stop_time - start_time))
 
+
+    start_time = time.time()
+    write_kanji_distance(db)
+    stop_time = time.time()
+    print("write_kanji_distance in {:2.3f} seconds".format(stop_time - start_time))
 
 if __name__ == "__main__":
     print("DramaCharCount started")
