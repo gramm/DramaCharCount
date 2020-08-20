@@ -11,7 +11,7 @@ import traceback
 import mysql.connector
 from mysql.connector import Error
 
-from python.DccUtils import get_subfolders, get_files
+from python.DccUtils import get_subfolders, get_files, escape_sql
 
 g_maps = {}
 
@@ -232,13 +232,10 @@ def count_and_upload_char(db, path):
     # upload uids
     sql_inserts = []
     for char, uid in g_maps["char_to_uid"].items():
-        sql_insert = "({},\'{}\')".format(uid, char)
+        sql_insert = "({},\'{}\')".format(uid, escape_sql(char))
         sql_inserts.append(sql_insert)
 
     sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
-    sql = sql.replace("\"\"\"", "\"\\\"\"", 1)  # replace """ with "\"" as " is a special char in mysql
-    sql = sql.replace('\\', '\\\\', 1)  # replace "\" with "\\" as " is a special char in mysql
-    sql = sql.replace('\'\'\'', '\'\\\'\'', 1)  # replace "'" with "\'" as ' is a special char in mysql
     mycursor.execute(sql)
     db.commit()
 
@@ -348,9 +345,9 @@ def upload_lines(db):
 
     sql_inserts = []
     for line, uid in line_to_uid.items():
-        line = line.replace("\\", "\\\\'")
-        line = line.replace("\'", "\\'")
-        line = line.replace("\"", "\\\"")
+        print(line)
+        line = escape_sql(line)
+        print(line)
         sql_insert = "({},'{}')".format(uid, line)
         sql_inserts.append(sql_insert)
         # this request will be probably be over max_allowed_packet, so we update by batches of 5000 kanji

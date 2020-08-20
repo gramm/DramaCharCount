@@ -11,3 +11,12 @@ def get_files(path):
         for item in files:
             retlist.append((os.path.join(root, item)))
     return retlist
+
+
+def escape_sql(sql):
+    if 'proud' in sql:
+        print(sql)
+    chars = ['\\', '\'', '\"']
+    for c in chars:
+        sql = sql.replace(c, '\\'+c)
+    return sql
