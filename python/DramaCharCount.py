@@ -116,7 +116,7 @@ def reset_tables(db):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
-    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
+    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
@@ -276,6 +276,12 @@ def write_kanji_distance(db):
     jdpt_level = g_maps["char_uid_to_jdpt"]
     jlpt_level = g_maps["char_uid_to_jlpt"]
 
+    g_maps["distance_jdtp_to_jlpt"] = {}
+    g_maps["distance_jltp_to_jdpt"] = {}
+    distance_jdtp_to_jlpt = g_maps["distance_jdtp_to_jlpt"]
+    distance_jltp_to_jdpt = g_maps["distance_jltp_to_jdpt"]
+
+
     # create nested dicts (1st dict is direction, 2nd dict is level, 3rd dict is distance/count value as tring to write in javascrip var)
     jouyou_level = g_maps["char_uid_to_jouyou"]
     distance = {"jdpt_to_jlpt": {}, "jlpt_to_jdpt": {}}
@@ -294,14 +300,18 @@ def write_kanji_distance(db):
         cur_jdpt_level = jdpt_level[char_uid]
         cur_jlpt_level = jlpt_level[char_uid]
         if jdpt_level[char_uid] is not 0:
-            distance["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "{{x:{},y:{}}}".format(abs(jdpt_level[char_uid] - jlpt_level[char_uid]), total_count[char_uid])    # x = distance, y = count
+            cur_distance = jdpt_level[char_uid] - jlpt_level[char_uid]
+            distance["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
             labels["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
+            distance_jdtp_to_jlpt[char_uid] = cur_distance
         if jlpt_level[char_uid] is not 0:
-            distance["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "{{x:{},y:{}}}".format(abs(jlpt_level[char_uid] - jdpt_level[char_uid]), total_count[char_uid])    # x = distance, y = count
+            cur_distance = jlpt_level[char_uid] - jdpt_level[char_uid]
+            distance["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
             labels["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
+            distance_jltp_to_jdpt[char_uid] = cur_distance
 
     file_content = ["<script>\n\n"]
-    for level in range(1,6):
+    for level in range(1, 6):
         new_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", ",".join(distance["jdpt_to_jlpt"][level].values()), 1)
         new_labels = "var jdpt_{}_to_jlpt_label =[LABELS];".format(level).replace("LABELS", ",".join(labels["jdpt_to_jlpt"][level].values()), 1)
         file_content.append(new_data)
@@ -317,11 +327,18 @@ def write_kanji_distance(db):
     with f:
         writer = f.write("\n".join(file_content))
 
-def update_kanji_info(db):
+def load_dicts():
     global g_maps
     char_to_uid = g_maps["char_to_uid"]
-    jlpt_level = {}
-    jouyou_level = {}
+
+    # update dict
+    g_maps["char_uid_to_jlpt"] = {}
+    g_maps["char_uid_to_jdpt"] = {}
+    g_maps["char_uid_to_jouyou"] = {}
+
+    jlpt_level = g_maps["char_uid_to_jlpt"]
+    jdpt_level = g_maps["char_uid_to_jdpt"]
+    jouyou_level = g_maps["char_uid_to_jouyou"]
 
     # read jlpt/joyou levels
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
@@ -336,7 +353,6 @@ def update_kanji_info(db):
 
     # create JDPT ranking
     jdpt_count = {}
-    jdpt_level = {}
     for value in jlpt_level.values():
         value = value
         if value not in jdpt_count:
@@ -358,11 +374,24 @@ def update_kanji_info(db):
                 counter = 0
                 cur_jdpt_level -= 1
 
+
+def update_kanji_info(db):
+    global g_maps
+
+    jlpt_level = g_maps["char_uid_to_jlpt"]
+    jdpt_level = g_maps["char_uid_to_jdpt"]
+    jouyou_level = g_maps["char_uid_to_jouyou"]
+    distance_jdtp_to_jlpt = g_maps["distance_jdtp_to_jlpt"]
+    distance_jltp_to_jdpt = g_maps["distance_jltp_to_jdpt"]
+
     sql_inserts = []
     for value, kanji_uid in g_maps["char_to_uid"].items():
         cur_jlpt_level = jlpt_level[kanji_uid] if kanji_uid in jlpt_level else 0
         cur_jouyou_level = jouyou_level[kanji_uid] if kanji_uid in jouyou_level else 0
         cur_jdpt_level = jdpt_level[kanji_uid] if kanji_uid in jdpt_level else 0
+        cur_distance_jdtp_to_jlpt = distance_jdtp_to_jlpt[kanji_uid] if kanji_uid in distance_jdtp_to_jlpt else 99
+        cur_distance_jltp_to_jdpt = distance_jltp_to_jdpt[kanji_uid] if kanji_uid in distance_jltp_to_jdpt else 99
+
         flag = 0
         if is_kanji(value):
             flag = 1
@@ -370,17 +399,12 @@ def update_kanji_info(db):
             flag = 2
         else:
             flag = 3
-        sql_insert = "({},{},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, flag)
+        sql_insert = "({},{},{},{},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, cur_distance_jdtp_to_jlpt, cur_distance_jltp_to_jdpt, flag)
         sql_inserts.append(sql_insert)
-    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, jdpt, flag) VALUES {}".format(",".join(sql_inserts))
+    sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt, flag) VALUES {}".format(",".join(sql_inserts))
     mycursor = db.cursor()
     mycursor.execute(sql)
     db.commit()
-
-    # update dict
-    g_maps["char_uid_to_jlpt"] = jlpt_level
-    g_maps["char_uid_to_jdpt"] = jdpt_level
-    g_maps["char_uid_to_jouyou"] = jouyou_level
 
 
 def upload_lines(db):
@@ -466,15 +490,16 @@ def main(argv):
     stop_time = time.time()
     print("upload_lines in {:2.3f} seconds".format(stop_time - start_time))
 
-    start_time = time.time()
-    update_kanji_info(db)
-    stop_time = time.time()
-    print("update_kanji_info in {:2.3f} seconds".format(stop_time - start_time))
-
+    load_dicts()
     start_time = time.time()
     write_kanji_distance(db)
     stop_time = time.time()
     print("write_kanji_distance in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
+    update_kanji_info(db)
+    stop_time = time.time()
+    print("update_kanji_info in {:2.3f} seconds".format(stop_time - start_time))
 
 
 if __name__ == "__main__":

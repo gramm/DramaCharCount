@@ -1,6 +1,15 @@
 	<canvas id="jdtp_to_jlpt" width="20" height="10"></canvas>
 	<canvas id="jltp_to_jdpt" width="20" height="10"></canvas>
+	<button onclick="resetZoom()">Reset Zoom</button>
 	
+	<script>
+		var chart_array = [];
+		window.resetZoom = function() {
+			chart_array[0].resetZoom();
+			chart_array[1].resetZoom();
+		};
+	</script>
+		
 	<?php
 		include("jdpt_jlpt_dist.js");	
 	?>
