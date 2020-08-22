@@ -116,7 +116,7 @@ def reset_tables(db):
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
-    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, flag))"
+    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
@@ -295,17 +295,15 @@ def write_kanji_distance(db):
 
     # classify each kanji by level then by distance.
     for char_uid in jdpt_level.keys():
-        if char_uid not in jdpt_level or char_uid not in jlpt_level:
-            continue
-        cur_jdpt_level = jdpt_level[char_uid]
-        cur_jlpt_level = jlpt_level[char_uid]
-        if jdpt_level[char_uid] is not 0:
-            cur_distance = jdpt_level[char_uid] - jlpt_level[char_uid]
+        cur_jdpt_level = jdpt_level[char_uid] if char_uid in jdpt_level else 0
+        cur_jlpt_level = jlpt_level[char_uid] if char_uid in jlpt_level else 0
+        if cur_jdpt_level is not 0:
+            cur_distance = cur_jdpt_level - cur_jlpt_level
             distance["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
             labels["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
             distance_jdtp_to_jlpt[char_uid] = cur_distance
-        if jlpt_level[char_uid] is not 0:
-            cur_distance = jlpt_level[char_uid] - jdpt_level[char_uid]
+        if cur_jlpt_level is not 0:
+            cur_distance = cur_jlpt_level - cur_jdpt_level
             distance["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
             labels["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
             distance_jltp_to_jdpt[char_uid] = cur_distance

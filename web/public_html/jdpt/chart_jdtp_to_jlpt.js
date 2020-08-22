@@ -62,7 +62,7 @@ var myChart = new Chart(document.getElementById(current_chart), {
                     },					
                     ticks: {
 						stepSize : 1,
-						max: 4.5
+						max: 6
                     },
                 }
             ]
