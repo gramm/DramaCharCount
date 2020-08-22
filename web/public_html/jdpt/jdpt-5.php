@@ -1,87 +1,34 @@
-
-	<canvas id="myChart1" width="20" height="10"></canvas>
-	
+	<canvas id="jdtp_to_jlpt" width="20" height="10"></canvas>
+	<canvas id="jltp_to_jdpt" width="20" height="10"></canvas>
 	
 	<?php
-		include("data.js");	
+		include("jdpt_jlpt_dist.js");	
+	?>
+		
+	<script>
+	 var current_chart = 'jdtp_to_jlpt';
+	 var current_label = jdpt_5_to_jlpt_label;
+	 var current_data = jdpt_5_to_jlpt_data;
+	 var current_title = 'Distance of JDPT kanji compared to the equivalent JLPT level';
+	</script>
+	
+	<?php
+		include("chart_jdtp_to_jlpt.js");	
 	?>
 			
 	<script>
+	 var current_chart = 'jltp_to_jdpt';
+	 var current_label = jlpt_5_to_jdpt_label;
+	 var current_data = jlpt_5_to_jdpt_data;
+	 var current_title = 'Distance of JLPT kanji compared to the equivalent JDPT level';
+	</script>
 	
-	
-var chartData = {
-	labels: valuelabel,
-    datasets: [
-        {
-			label: 'Distance',
-			borderColor: '#2196f3', // Add custom color border            
-			backgroundColor: '#2196f3', // Add custom color background (Points and Fill)
-            data: valuedata,
-			pointRadius:10,
-			pointHoverRadius:12
-        }
-    ]
-};
-
-
-var myBarChart = new Chart(document.getElementById("myChart1"), {
-    type: 'scatter',
-    data: {
-	labels: valuelabel,
-    datasets: [
-        {
-			label: 'Distance',
-			borderColor: '#2196f3', // Add custom color border            
-			backgroundColor: '#2196f3', // Add custom color background (Points and Fill)
-            data: valuedata,
-			pointRadius:10,
-			pointHoverRadius:12
-        }
-    ]
-},
-    options: {
-      legend: { display: true },
-      title: {
-        display: true,
-        text: 'Distance of JDPT kanji compared to the equivalent JLPT level'
-      },
-	        scales: {
-				yAxes: [{
-				  type: 'logarithmic',
-				  display: true,
-				  scaleLabel: {
-					display: true,
-					labelString: 'Count',
-					fontSize: 16
-				  }
-				}],
-				xAxes: [{
-				  type: 'linear',
-				  position: 'bottom',
-				  display: true,
-				  scaleLabel: {
-					display: true,
-					labelString: 'Distance',
-					fontSize: 16
-				  },
-				  gridLines: {
-					display: true
-				  }
-				}]
-			  },
-				plugins: {
-                    datalabels: {
-                        color: '#d6621e',
-						align: 'right',
-						offset : 16,
-                        font: {
-                            weight: 'bold'
-                        }
-                    }
-                    }
-                }
-    
-});
+	<?php
+		include("chart_jdtp_to_jlpt.js");	
+	?>
+			
+			
+	<script>
 
 </script>
 	<div class="text-left blabla">

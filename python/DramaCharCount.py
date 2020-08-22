@@ -271,8 +271,51 @@ def count_and_upload_char(db, path):
 
 
 def write_kanji_distance(db):
-    pass
+    total_count = g_maps["char_uid_to_count"]
+    uid_to_char = g_maps["uid_to_char"]
+    jdpt_level = g_maps["char_uid_to_jdpt"]
+    jlpt_level = g_maps["char_uid_to_jlpt"]
 
+    # create nested dicts (1st dict is direction, 2nd dict is level, 3rd dict is distance/count value as tring to write in javascrip var)
+    jouyou_level = g_maps["char_uid_to_jouyou"]
+    distance = {"jdpt_to_jlpt": {}, "jlpt_to_jdpt": {}}
+    labels = {"jdpt_to_jlpt": {}, "jlpt_to_jdpt": {}}
+
+    for i in range(1, 6):
+        distance["jdpt_to_jlpt"][i] = {}
+        distance["jlpt_to_jdpt"][i] = {}
+        labels["jdpt_to_jlpt"][i] = {}
+        labels["jlpt_to_jdpt"][i] = {}
+
+    # classify each kanji by level then by distance.
+    for char_uid in jdpt_level.keys():
+        if char_uid not in jdpt_level or char_uid not in jlpt_level:
+            continue
+        cur_jdpt_level = jdpt_level[char_uid]
+        cur_jlpt_level = jlpt_level[char_uid]
+        if jdpt_level[char_uid] is not 0:
+            distance["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "{{x:{},y:{}}}".format(abs(jdpt_level[char_uid] - jlpt_level[char_uid]), total_count[char_uid])    # x = distance, y = count
+            labels["jdpt_to_jlpt"][cur_jdpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
+        if jlpt_level[char_uid] is not 0:
+            distance["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "{{x:{},y:{}}}".format(abs(jlpt_level[char_uid] - jdpt_level[char_uid]), total_count[char_uid])    # x = distance, y = count
+            labels["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
+
+    file_content = ["<script>\n\n"]
+    for level in range(1,6):
+        new_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", ",".join(distance["jdpt_to_jlpt"][level].values()), 1)
+        new_labels = "var jdpt_{}_to_jlpt_label =[LABELS];".format(level).replace("LABELS", ",".join(labels["jdpt_to_jlpt"][level].values()), 1)
+        file_content.append(new_data)
+        file_content.append(new_labels)
+        new_data = "var jlpt_{}_to_jdpt_data =[DATA];".format(level).replace("DATA", ",".join(distance["jlpt_to_jdpt"][level].values()), 1)
+        new_labels = "var jlpt_{}_to_jdpt_label =[LABELS];".format(level).replace("LABELS", ",".join(labels["jlpt_to_jdpt"][level].values()), 1)
+        file_content.append(new_data)
+        file_content.append(new_labels)
+
+    file_content.append("\n</script>")
+
+    f = open('C:/Users/Max/Documents/My Documents/PythonWorkspace/DramaCharCount/web/public_html/jdpt/jdpt_jlpt_dist.js', 'w', encoding="utf-8")
+    with f:
+        writer = f.write("\n".join(file_content))
 
 def update_kanji_info(db):
     global g_maps
@@ -284,18 +327,18 @@ def update_kanji_info(db):
     with open('jlpt_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
             if row[0] in char_to_uid:
-                jlpt_level[char_to_uid[row[0]]] = row[1]
+                jlpt_level[char_to_uid[row[0]]] = int(row[1])
 
     with open('jouyou_kanji.csv', mode='r', encoding='utf-8') as csv_file:
         for row in csv.reader(csv_file, delimiter=';'):
             if row[0] in char_to_uid:
-                jouyou_level[char_to_uid[row[0]]] = row[1]
+                jouyou_level[char_to_uid[row[0]]] = int(row[1])
 
     # create JDPT ranking
     jdpt_count = {}
     jdpt_level = {}
     for value in jlpt_level.values():
-        value = int(value)
+        value = value
         if value not in jdpt_count:
             jdpt_count[value] = 1
         else:
@@ -334,11 +377,10 @@ def update_kanji_info(db):
     mycursor.execute(sql)
     db.commit()
 
-    #update dict
+    # update dict
     g_maps["char_uid_to_jlpt"] = jlpt_level
     g_maps["char_uid_to_jdpt"] = jdpt_level
     g_maps["char_uid_to_jouyou"] = jouyou_level
-
 
 
 def upload_lines(db):
@@ -387,8 +429,6 @@ def upload_lines(db):
     db.commit()
 
 
-
-
 def main(argv):
     args = parse_args(argv)
 
@@ -431,11 +471,11 @@ def main(argv):
     stop_time = time.time()
     print("update_kanji_info in {:2.3f} seconds".format(stop_time - start_time))
 
-
     start_time = time.time()
     write_kanji_distance(db)
     stop_time = time.time()
     print("write_kanji_distance in {:2.3f} seconds".format(stop_time - start_time))
+
 
 if __name__ == "__main__":
     print("DramaCharCount started")
