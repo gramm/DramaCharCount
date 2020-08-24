@@ -34,7 +34,7 @@ var myChart = new Chart(document.getElementById(current_chart), {
         },
         scales: {
             yAxes: [{
-                    type: 'logarithmic',
+                    type: 'linear',
                     ticks: {
                         callback: function (tick, index, ticks) {
                             return tick.toLocaleString()
@@ -62,7 +62,15 @@ var myChart = new Chart(document.getElementById(current_chart), {
                     },					
                     ticks: {
 						stepSize : 1,
-						max: 6
+						max: 6,
+						callback: function(value, index, values) {
+							if(value == current_level){
+								return 'Not in Dictionary';
+							}
+							else{
+								return value;
+							}
+						}
                     },
                 }
             ]
@@ -72,11 +80,17 @@ var myChart = new Chart(document.getElementById(current_chart), {
                 align: 'right',
                 offset: 16,
                 font: {
-                    weight: 'bold'
+                    weight: 'bold',
+					size: 20
                 },
 
                 formatter: function (value, context) {
-                    return context.chart.data.labels[context.dataIndex];
+					var mylabel = context.chart.data.labels[context.dataIndex]; 
+					if (mylabel.length > 5){
+						mylabel = mylabel.substring(0,5);
+						mylabel = mylabel + "...";
+					}
+                    return mylabel;
                 }
 
             },

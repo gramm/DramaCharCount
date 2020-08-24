@@ -21,12 +21,14 @@
     </li>
       <a class="nav-link text-white">|</a>
     </li>
+	<!--
     <li class="nav-item">
       <a class="nav-link text-white" href="?page=blog.php">Blog</a>
     </li>
     <li class="nav-item">
       <a class="nav-link text-white">|</a>
     </li>
+	-->
     <li class="nav-item">
       <a class="nav-link text-white" href="?page=about.php">About</a>
     </li>

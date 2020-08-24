@@ -18,10 +18,10 @@
 	?>
 		
 	<script>
-	 var current_level = 5;
+	 var current_level = 3;
 	 var current_chart = 'jdtp_to_jlpt';
-	 var current_label = jdpt_5_to_jlpt_label;
-	 var current_data = jdpt_5_to_jlpt_data;
+	 var current_label = jdpt_3_to_jlpt_label;
+	 var current_data = jdpt_3_to_jlpt_data;
 	 var current_title = 'Distance of JDPT kanji compared to the equivalent JLPT level';
 	</script>
 	
@@ -31,8 +31,8 @@
 			
 	<script>
 	 var current_chart = 'jltp_to_jdpt';
-	 var current_label = jlpt_5_to_jdpt_label;
-	 var current_data = jlpt_5_to_jdpt_data;
+	 var current_label = jlpt_3_to_jdpt_label;
+	 var current_data = jlpt_3_to_jdpt_data;
 	 var current_title = 'Distance of JLPT kanji compared to the equivalent JDPT level';
 	</script>
 	
@@ -78,7 +78,7 @@
 		$wordTable = "";
 		while($row = mysqli_fetch_array($result))
 		{
-			if((int)$row['jdpt'] != 5){
+			if((int)$row['jdpt'] != 3){
 				continue;
 			}
 			
