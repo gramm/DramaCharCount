@@ -1,5 +1,18 @@
+
+	
+	<div class="blabla help text-left">
+	This graph shows the distance in levels between a kanji from the JDTP and its equivalent level in the JLPT<br />
+	For example, if the distance is 3, a JDPT kanji level 5 (extremely common in drama) is only level 2 in the JLPT.
+	On the other side, a negative distance means that the kanji is learned earlier in the JLPT than in the JDPT.<br />
+	For each possible distance, only the ten most common kanji are shown.
+	</div>
 	<canvas id="jdtp_to_jlpt" width="20" height="10"></canvas>
 	<button onclick="resetZoom1()">Reset Zoom</button>
+	
+	
+	<div class="blabla help text-left">
+	This graph shows the distance in levels between a kanji from the JLPT and its equivalent level in the JDPT<br />
+	</div>
 	<canvas id="jltp_to_jdpt" width="20" height="10"></canvas>
 	<button onclick="resetZoom2()">Reset Zoom</button>
 	
