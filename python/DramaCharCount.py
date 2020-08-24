@@ -271,7 +271,6 @@ def count_and_upload_char(db, path):
 
 
 def write_kanji_distance(db):
-    # this function is a monster and should be rewritten by having a class for kanji and working with the kanji attributes instead of nesting dicts for ever
     total_count = g_maps["char_uid_to_count"]
     uid_to_char = g_maps["uid_to_char"]
     jdpt_level = g_maps["char_uid_to_jdpt"]
@@ -294,59 +293,42 @@ def write_kanji_distance(db):
         labels["jdpt_to_jlpt"][i] = {}
         labels["jlpt_to_jdpt"][i] = {}
 
-    # classify each kanji by level then by distance.
+        # classify each kanji by level then by distance.
     for char_uid in jdpt_level.keys():
         cur_jdpt_level = jdpt_level[char_uid] if char_uid in jdpt_level else 0
         cur_jlpt_level = jlpt_level[char_uid] if char_uid in jlpt_level else 0
-        count = total_count[char_uid]
-
-        if count > 10000:
-            count = int(int(round(count/10000)) * 10000)
-        if count > 1000:
-            count = int(int(round(count/1000)) * 1000)
-        if count > 100:
-            count = int(int(round(count/100)) * 100)
-        elif count > 10:
-            count = int(int(round(count / 10)) * 10)
-        else:
-            count = round(count / 10) * 10
-            if count == 0:
-                count = 1
-
         if cur_jdpt_level is not 0:
             cur_distance = cur_jdpt_level - cur_jlpt_level
             if cur_distance not in distance["jdpt_to_jlpt"][cur_jdpt_level]:
                 distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance] = {}
-            if count not in distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance]:
-                distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][count] = []  # list of all char_ui labels for this coordinate (x=distance, y=count)
-            distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][count].append(uid_to_char[char_uid])
-        #if cur_jlpt_level is not 0:
-        #    cur_distance = cur_jlpt_level - cur_jdpt_level
-        #    distance["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "{{x:{},y:{}}}".format(cur_distance, count)  # x = distance, y = count
-        #    labels["jlpt_to_jdpt"][cur_jlpt_level][char_uid] = "'{}'".format(uid_to_char[char_uid])
-        #    distance_jltp_to_jdpt[char_uid] = cur_distance
+                labels["jdpt_to_jlpt"][cur_jdpt_level][cur_distance] = {}
+            if len(distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance]) < 10:
+                distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
+                labels["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][char_uid] = "'{}'".format(uid_to_char[char_uid])
+                distance_jdtp_to_jlpt[char_uid] = cur_distance
+        if cur_jlpt_level is not 0:
+            cur_distance = cur_jlpt_level - cur_jdpt_level
+            if cur_distance not in distance["jlpt_to_jdpt"][cur_jlpt_level]:
+                distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance] = {}
+                labels["jlpt_to_jdpt"][cur_jlpt_level][cur_distance] = {}
+            if len(distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance]) < 10:
+                distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance][char_uid] = "{{x:{},y:{}}}".format(cur_distance, total_count[char_uid])  # x = distance, y = count
+                labels["jlpt_to_jdpt"][cur_jlpt_level][cur_distance][char_uid] = "'{}'".format(uid_to_char[char_uid])
+                distance_jltp_to_jdpt[char_uid] = cur_distance
 
     file_content = ["<script>\n\n"]
     for level in range(1, 6):
-        points = []
-        labels = []
-        # generate points
-        for cur_distance in distance["jdpt_to_jlpt"][level].keys():
-            for cur_count in distance["jdpt_to_jlpt"][level][cur_distance]:
-                points.append("{{x:{},y:{}}}".format(cur_distance, cur_count))
-                chars = []
-                for char in distance["jdpt_to_jlpt"][level][cur_distance][cur_count]:
-                    chars.append(char)
-                labels.append(" ".join(chars))
-        new_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", ",".join(points), 1)
-        new_labels = "var jdpt_{}_to_jlpt_label =[\'LABELS\'];".format(level).replace("LABELS", '\',\''.join(labels), 1)
+        datas = ""
+        for cur_distance,  char_uids in distance["jdpt_to_jlpt"][level].items():
+            datas = datas + ",".join(char_uids.values()) + ","
+        _labels = ""
+        for cur_distance, char_uids in labels["jdpt_to_jlpt"][level].items():
+            _labels = _labels + ",".join(char_uids.values()) + ","
+        new_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", datas, 1)
+        new_labels = "var jdpt_{}_to_jlpt_label =[LABELS];".format(level).replace("LABELS", _labels, 1)
         file_content.append(new_data)
         file_content.append(new_labels)
-#        new_data = "var jlpt_{}_to_jdpt_data =[DATA];".format(level).replace("DATA", ",".join(distance["jlpt_to_jdpt"][level].values()), 1)
-#        new_labels = "var jlpt_{}_to_jdpt_label =[LABELS];".format(level).replace("LABELS", ",".join(labels["jlpt_to_jdpt"][level].values()), 1)
-#        file_content.append(new_data)
-#        file_content.append(new_labels)
-#
+
     file_content.append("\n</script>")
 
     f = open('C:/Users/Max/Documents/My Documents/PythonWorkspace/DramaCharCount/web/public_html/jdpt/jdpt_jlpt_dist.js', 'w', encoding="utf-8")
