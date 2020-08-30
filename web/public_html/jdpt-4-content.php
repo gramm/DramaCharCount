@@ -12,6 +12,12 @@
 	<br />	
 	<br />	
 	
+	<table class="table table-sm table-stripped text-left" id="table_jdtp_to_jlpt">
+		<tr>
+			<th>Distance</th>
+			<th>Kanji(Count)</th>
+		</tr>
+	</table>
 	
 	<div class="blabla help text-left">
 	This graph shows the distance in levels between a kanji from the JLPT and its equivalent level in the JDPT<br />
@@ -20,6 +26,13 @@
 	<br />	
 	<button onclick="resetZoom2()">Reset Zoom</button>
 	<br />	
+	<table class="table table-sm table-stripped text-left" id="table_jltp_to_jdpt">
+		<tr>
+			<th>Distance</th>
+			<th>Kanji(Count)</th>
+		</tr>
+	</table>
+	
 	
 	<script>
 		var chart_array = [];
@@ -36,6 +49,7 @@
 	?>
 		
 	<script>
+	 var current_table = 'table_jdtp_to_jlpt';
 	 var current_level = 4;
 	 var current_chart = 'jdtp_to_jlpt';
 	 var current_label = jdpt_4_to_jlpt_label;
@@ -45,9 +59,11 @@
 	
 	<?php
 		include("chart_jdtp_to_jlpt.js");	
+		include("table_jdtp_to_jlpt.js");	
 	?>
 			
 	<script>
+	 var current_table = 'table_jltp_to_jdpt';
 	 var current_chart = 'jltp_to_jdpt';
 	 var current_label = jlpt_4_to_jdpt_label;
 	 var current_data = jlpt_4_to_jdpt_data;
@@ -56,6 +72,7 @@
 	
 	<?php
 		include("chart_jdtp_to_jlpt.js");	
+		include("table_jdtp_to_jlpt.js");	
 	?>
 			
 			

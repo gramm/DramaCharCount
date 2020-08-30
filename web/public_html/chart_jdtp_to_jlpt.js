@@ -125,12 +125,12 @@ var myChart = new Chart(document.getElementById(current_chart), {
             speed: 20,
  
             // Minimal pan distance required before actually applying pan
-            threshold: 10,
+            threshold: 1,
  
             // Function called while the user is panning
-            //onPan: function({chart}) { console.log(`I'm panning!!!`); },
+            onPan: function({chart}) { console.log(`I'm panning!!!`); },
             // Function called once panning is completed
-            //onPanComplete: function({chart}) { console.log(`I was panned!!!`); }
+            onPanComplete: function({chart}) { console.log(`I was panned!!!`); }
         },
  
         // Container for zoom options
