@@ -30,10 +30,10 @@
 	?>
 		
 	<script>
-	 var current_level = 5;
+	 var current_level = 4;
 	 var current_chart = 'jdtp_to_jlpt';
-	 var current_label = jdpt_5_to_jlpt_label;
-	 var current_data = jdpt_5_to_jlpt_data;
+	 var current_label = jdpt_4_to_jlpt_label;
+	 var current_data = jdpt_4_to_jlpt_data;
 	 var current_title = 'Distance of JDPT kanji compared to the equivalent JLPT level';
 	</script>
 	
@@ -43,8 +43,8 @@
 			
 	<script>
 	 var current_chart = 'jltp_to_jdpt';
-	 var current_label = jlpt_5_to_jdpt_label;
-	 var current_data = jlpt_5_to_jdpt_data;
+	 var current_label = jlpt_4_to_jdpt_label;
+	 var current_data = jlpt_4_to_jdpt_data;
 	 var current_title = 'Distance of JLPT kanji compared to the equivalent JDPT level';
 	</script>
 	
@@ -53,64 +53,14 @@
 	?>
 			
 			
+			
 	<div class="text-left blabla" >
 		<br /> 
 		Below you can find the list of all JDPT kanji for this level.
 		<br /> 
-		
-		<?php
-
-	// first join selects all kanji used in this drama
-	// second join merges jlpt to this selection but keeps only allowed jlpt
-	$query = "
-	SELECT * from count, kanji_info, kanji
-	WHERE count.drama_uid = 1 AND count.kanji_uid = kanji_info.kanji_uid  AND kanji.kanji_uid = kanji_info.kanji_uid
-	ORDER BY count.count DESC
-	";
-	$result = mysqli_query($con,$query);
-		
-	
-	
-	//do word table
-	
-	echo "<table class='table table-bordered table-striped table-sm' id='myTable'>
-		<tr>
-			<th onclick='sortTable(0)'>Word</th>
-			<th onclick='sortTable(1)'>Count</th>
-			<th onclick='sortTable(2)'>Jlpt</th>
-			<th onclick='sortTable(3)'>Jōyō </th>
-			<th onclick='sortTable(4)'>Jdpt </th>
-			<th onclick='sortTable(5)'>Jdpt to Jlpt </th>
-		</tr>";
-
-		$wordTable = "";
-		while($row = mysqli_fetch_array($result))
-		{
-			if((int)$row['jdpt'] != 5){
-				continue;
-			}
-			
-			echo "<tr>";
-				echo "<td>" . $row['value'] . "</a></td>";
-				
-				echo "<td>" . $row['count'] . "</td>";
-				
-				if(((int)$row['jlpt'])>0) {echo "<td>" . $row['jlpt'] . "</td>";}
-				else {echo "<td>-</td>";}
-				
-				if(((int)$row['jouyou'])>0) {echo "<td>" . $row['jouyou'] . "</td>";}
-				else {echo "<td>-</td>";}
-				
-				if(((int)$row['jdpt'])>0) {echo "<td>" . $row['jdpt'] . "</td>";}
-				else {echo "<td>-</td>";}
-				
-				if(((int)$row['dist_to_jlpt'])!=99) {echo "<td>" . $row['dist_to_jlpt'] . "</td>";}
-				else {echo "<td>-</td>";}
-				
-				
-			echo "</tr>";
-		}
-	echo "</table>";
-		?>
-	
 	</div>
+	
+	<?php
+		include("jdpt_utils.php");
+		drawJdptTable($con, 4);
+	?>

@@ -19,72 +19,84 @@
 
 	<script>
 function sortTable(n, level) {
-  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-  table = document.getElementById("myTable");
-  switching = true;
-  // Set the sorting direction to ascending:
-  dir = "desc";
-  /* Make a loop that will continue until
-  no switching has been done: */
-  while (switching) {
-    // Start by saying: no switching is done:
-    switching = false;
+    var table,
+    rows,
+    switching,
+    i,
+    x,
+    y,
+    shouldSwitch,
+    dir,
+    switchcount = 0;
+    table = document.getElementById("myTable");
+
+    var dict = new Object();
+    var dict_c_to_r = new Object();
     rows = table.rows;
-    /* Loop through all table rows (except the
-    first, which contains table headers): */
-    for (i = 1; i < (rows.length - 1); i++) {
-      // Start by saying there should be no switching:
-      shouldSwitch = false;
-      /* Get the two elements you want to compare,
-      one from current row and one from the next: */
-      x = rows[i].getElementsByTagName("TD")[n].innerHTML.toLowerCase();
-      y = rows[i + 1].getElementsByTagName("TD")[n].innerHTML.toLowerCase();
-	  
-	  var ix = parseInt(x);
-	  var iy = parseInt(y);
-	  if( isNaN(ix) == false){
-		  x = ix;
-	  }
-	  if( isNaN(iy) == false){
-		  y = iy;
-	  }
-	  if( x == "same level") { x = 0;}
-	  if( y == "same level") { y = 0;}
-	  if( x == "not in jlpt") { x = level;}
-	  if( y == "not in jlpt") { y = level;}
-	  
-      /* Check if the two rows should switch place,
-      based on the direction, asc or desc: */
-      if (dir == "asc") {
-        if (x > y) {
-          // If so, mark as a switch and break the loop:
-          shouldSwitch = true;
-          break;
+    for (i = 1; i < rows.length; i++) {
+
+        c = rows[i].getElementsByTagName("TD")[0].innerHTML;
+        x = rows[i].getElementsByTagName("TD")[n].innerHTML.toLowerCase();
+        var ix = parseInt(x);
+        if (isNaN(ix) == false) {
+            x = ix;
         }
-      } else if (dir == "desc") {
-        if (x < y) {
-          // If so, mark as a switch and break the loop:
-          shouldSwitch = true;
-          break;
+        if (x == "same level") {
+            x = 0;
         }
-      }
+        if (x == "not in jlpt") {
+            x = level;
+        }
+
+        dict[c] = x;
+		dict_c_to_r[c] = i;
     }
-    if (shouldSwitch) {
-      /* If a switch has been marked, make the switch
-      and mark that a switch has been done: */
-      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-      switching = true;
-      // Each time a switch is done, increase this count by 1:
-      switchcount ++;
-    } else {
-      /* If no switching has been done AND the direction is "asc",
-      set the direction to "desc" and run the while loop again. */
-      if (switchcount == 0 && dir == "desc") {
-        dir = "asc";
-        switching = true;
-      }
-    }
-  }
+    // Create items array
+    var items = Object.keys(dict).map(function (key) {
+        return [key, dict[key]];
+    });
+
+    // Sort the array based on the second element
+    items.sort(function (first, second) {
+        return second[1] - first[1];
+    });
+
+    dict = items;
+	let myRows = [];
+	var row = 0;
+	while(table.rows.length > 1){
+		myRows[row++] = table.rows[1];
+	    table.rows[0].parentNode.removeChild(table.rows[1]);
+	}
+		table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[0][0]] - 1], table.rows[0]);
+		table.rows[0].parentNode.insertBefore(table.rows[1], table.rows[0]);
+		
+    for (i = myRows.length - 1; i >= 0 ; i--) {
+		table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[i][0]] - 1], table.rows[1]);
+		//table.appendChild(myRows[dict_c_to_r[dict[i][0]] - 1]);
+	}
+	
+	//table.rows[0].parentNode.insertBefore(table.rows[0], table.rows[table.rows.length - 1]);
+	
+	
+	/*
+    for (i = 1; i < items.length; i++) {
+		
+		row_new = dict_c_to_r[items[i][0]];
+		cur_top = rows[i].getElementsByTagName("TD")[0].innerHTML;
+		dict_c_to_r[cur_top] = dict_c_to_r[items[i][0]]
+		
+		myRows = 
+
+		
+		
+		//rows[1].parentNode.insertBefore(table.rows[row_new], table.rows[i]);
+		//rows[1].parentNode.insertBefore(table.rows[2], table.rows[row_new + 1]);
+		var shifted = table.rows[row_new];
+	    rows[0].parentNode.removeChild(table.rows[row_new]);
+		table.appendChild(shifted);
+    }	
+	*/
 }
 </script>
 <nav class="navbar navbar-expand-sm bg-light navbar-light justify-content-center" >
