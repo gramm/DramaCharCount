@@ -8,4 +8,8 @@ http://www.jdramastuff.xyz/index.php
 http://www.jdramastuff.xyz/jdpt.php
 http://www.jdramastuff.xyz/jdpt/intro.php
 http://www.jdramastuff.xyz/jdpt/jdpt-5.php
+http://www.jdramastuff.xyz/jdpt/jdpt-4.php
+http://www.jdramastuff.xyz/jdpt/jdpt-3.php
+http://www.jdramastuff.xyz/jdpt/jdpt-2.php
+http://www.jdramastuff.xyz/jdpt/jdpt-1.php
 http://www.jdramastuff.xyz/openConnection.php

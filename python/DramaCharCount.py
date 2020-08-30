@@ -269,37 +269,18 @@ def count_and_upload_char(db, path):
     #        if re.match("[一-龯]", uid_to_char[char_uid]):
     #            writer.writerow([uid_to_char[char_uid], count])
 
-
-def write_kanji_distance(db):
-    # this function is an absolute abomination and should be rewritten by having a class for kanji and working with the kanji attributes instead of nesting dicts for ever
-    # and copy pasting stuff to handle both directions
-    total_count = g_maps["char_uid_to_count"]
-    uid_to_char = g_maps["uid_to_char"]
-    jdpt_level = g_maps["char_uid_to_jdpt"]
-    jlpt_level = g_maps["char_uid_to_jlpt"]
-
-    g_maps["distance_jdtp_to_jlpt"] = {}
-    g_maps["distance_jltp_to_jdpt"] = {}
-    distance_jdtp_to_jlpt = g_maps["distance_jdtp_to_jlpt"]
-    distance_jltp_to_jdpt = g_maps["distance_jltp_to_jdpt"]
-
-    # create nested dicts (1st dict is direction, 2nd dict is level, 3rd dict is distance/count value as tring to write in javascrip var)
-    jouyou_level = g_maps["char_uid_to_jouyou"]
-    distance = {"jdpt_to_jlpt": {}, "jlpt_to_jdpt": {}}
-    labels = {"jdpt_to_jlpt": {}, "jlpt_to_jdpt": {}}
-
-    for i in range(1, 6):
-        distance["jdpt_to_jlpt"][i] = {}
-        distance["jlpt_to_jdpt"][i] = {}
-        labels["jdpt_to_jlpt"][i] = {}
-        labels["jlpt_to_jdpt"][i] = {}
-
-    # classify each kanji by level then by distance.
-    for char_uid in total_count.keys():
-        cur_jdpt_level = jdpt_level[char_uid] if char_uid in jdpt_level else 0
-        cur_jlpt_level = jlpt_level[char_uid] if char_uid in jlpt_level else 0
-        count = total_count[char_uid]
-
+class Kanji:
+    def __init__(self, char_uid):
+        # could be optimized by having functions return the equivalent dict entries instead of duplicating them
+        self.char_uid = char_uid
+        self.char = g_maps["uid_to_char"][char_uid]
+        self.count = g_maps["char_uid_to_count"][char_uid]
+        self.jdpt_level = g_maps["char_uid_to_jdpt"][char_uid] if char_uid in g_maps["char_uid_to_jdpt"] else 0
+        self.jlpt_level = g_maps["char_uid_to_jlpt"][char_uid] if char_uid in g_maps["char_uid_to_jlpt"] else 0
+        self.dist_jdpt_to_jlpt = self.jdpt_level - self.jlpt_level
+        self.dist_jlpt_to_jdpt = self.jlpt_level - self.jdpt_level
+        self.jouyou = g_maps["char_uid_to_jouyou"][char_uid] if char_uid in g_maps["char_uid_to_jouyou"] else 0
+        count = self.count
         if count > 10000:
             count = int(int(round(count / 10000)) * 10000)
         if count > 1000:
@@ -308,66 +289,83 @@ def write_kanji_distance(db):
             count = int(int(round(count / 100)) * 100)
         elif count > 10:
             count = int(int(round(count / 10)) * 10)
+        self.count_round = count
+        self.count_round = self.count
 
-        if cur_jdpt_level is not 0:
-            cur_distance = cur_jdpt_level - cur_jlpt_level
-            if cur_distance not in distance["jdpt_to_jlpt"][cur_jdpt_level]:
-                distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance] = {}
-            if count not in distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance]:
-                distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][count] = []  # list of all char_ui labels for this coordinate (x=distance, y=count)
-            distance["jdpt_to_jlpt"][cur_jdpt_level][cur_distance][count].append(uid_to_char[char_uid])
 
-        if cur_jlpt_level is not 0:
-            cur_distance = cur_jlpt_level - cur_jdpt_level
-            if cur_distance not in distance["jlpt_to_jdpt"][cur_jlpt_level]:
-                distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance] = {}
-            if count not in distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance]:
-                distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance][count] = []  # list of all char_ui labels for this coordinate (x=distance, y=count)
-            distance["jlpt_to_jdpt"][cur_jlpt_level][cur_distance][count].append(uid_to_char[char_uid])
+def write_kanji_distance(db):
+    char_uid_to_kanji = {}
+    # build kanji dict
+    total_count = g_maps["char_uid_to_count"]
+    for char_uid in sorted(total_count, key=total_count.get, reverse=True):
+        char_uid_to_kanji[char_uid] = Kanji(char_uid)
+
+    jdpt_to_jlpt_dist = {}
+    jlpt_to_jdpt_dist = {}
+
+    # one key per JDPT/JLPT level.
+    for level in range(0, 6):
+        jdpt_to_jlpt_dist[level] = {}
+        jlpt_to_jdpt_dist[level] = {}
+        # one key per possible distance
+        for distance in range(-6, 6):
+            # Each dict has len max 10 (i.e. 10 points for a given distance)
+            jdpt_to_jlpt_dist[level][distance] = []
+            jlpt_to_jdpt_dist[level][distance] = []
+
+    for char_uid in sorted(total_count, key=total_count.get, reverse=True):
+        kanji = char_uid_to_kanji[char_uid]
+        if len(jdpt_to_jlpt_dist[kanji.jdpt_level][kanji.dist_jdpt_to_jlpt]) < 10:
+            jdpt_to_jlpt_dist[kanji.jdpt_level][kanji.dist_jdpt_to_jlpt].append(kanji)
+        if len(jlpt_to_jdpt_dist[kanji.jlpt_level][kanji.dist_jlpt_to_jdpt]) < 10:
+            jlpt_to_jdpt_dist[kanji.jlpt_level][kanji.dist_jlpt_to_jdpt].append(kanji)
 
     file_content = ["<script>\n\n"]
-    for level in range(1, 6):
-        points = []
-        labels = []
-        # generate points
-        for cur_distance in distance["jdpt_to_jlpt"][level].keys():
-            ctr = 0
-            for cur_count in distance["jdpt_to_jlpt"][level][cur_distance]:
-                if ctr >= 10:
-                    break
-                points.append("{{x:{},y:{}}}".format(cur_distance, cur_count))
-                chars = []
-                for char in distance["jdpt_to_jlpt"][level][cur_distance][cur_count]:
-                    ctr += 1
-                    if ctr > 10:
-                        break
-                    chars.append(char)
-                labels.append(" ".join(chars))
-        new_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", ",".join(points), 1)
-        new_labels = "var jdpt_{}_to_jlpt_label =[\'LABELS\'];".format(level).replace("LABELS", '\',\''.join(labels), 1)
-        file_content.append(new_data)
-        file_content.append(new_labels)
 
-        points = []
-        labels = []
-        # generate points
-        for cur_distance in distance["jlpt_to_jdpt"][level].keys():
-            ctr = 0
-            for cur_count in distance["jlpt_to_jdpt"][level][cur_distance]:
-                if ctr >= 10:
-                    break
-                points.append("{{x:{},y:{}}}".format(cur_distance, cur_count))
-                chars = []
-                for char in distance["jlpt_to_jdpt"][level][cur_distance][cur_count]:
-                    ctr += 1
-                    if ctr > 10:
-                        break
-                    chars.append(char)
-                labels.append(" ".join(chars))
-        new_data = "var jlpt_{}_to_jdpt_data =[DATA];".format(level).replace("DATA", ",".join(points), 1)
-        new_labels = "var jlpt_{}_to_jdpt_label =[\'LABELS\'];".format(level).replace("LABELS", '\',\''.join(labels), 1)
-        file_content.append(new_data)
-        file_content.append(new_labels)
+    for level in range(1, 6):
+        level_points = []
+        level_labels = []
+        for distance in range(-6, 6):
+            points = []
+            labels = {}
+            # merge points with same count
+            for kanji in jdpt_to_jlpt_dist[level][distance]:
+                if kanji.count_round not in points:
+                    points.append(kanji.count_round)
+                    labels[kanji.count_round] = ""
+                labels[kanji.count_round] = labels[kanji.count_round] + " " + kanji.char
+            for point in points:
+                level_points.append("{{x:{},y:{}}}".format(distance, point))
+                level_labels.append("".join(labels[point]))
+
+        level_data = "var jdpt_{}_to_jlpt_data =[DATA];".format(level).replace("DATA", ",".join(level_points), 1)
+        level_label = "var jdpt_{}_to_jlpt_label =[\'LABELS\'];".format(level).replace("LABELS", '\',\''.join(level_labels), 1)
+
+        file_content.append(level_data)
+        file_content.append(level_label)
+
+    #plain copy paste ......
+    for level in range(1, 6):
+        level_points = []
+        level_labels = []
+        for distance in range(-6, 6):
+            points = []
+            labels = {}
+            # merge points with same count
+            for kanji in jlpt_to_jdpt_dist[level][distance]:
+                if kanji.count_round not in points:
+                    points.append(kanji.count_round)
+                    labels[kanji.count_round] = ""
+                labels[kanji.count_round] = labels[kanji.count_round] + " " + kanji.char
+            for point in points:
+                level_points.append("{{x:{},y:{}}}".format(distance, point))
+                level_labels.append("".join(labels[point]))
+
+        level_data = "var jlpt_{}_to_jdpt_data =[DATA];".format(level).replace("DATA", ",".join(level_points), 1)
+        level_label = "var jlpt_{}_to_jdpt_label =[\'LABELS\'];".format(level).replace("LABELS", '\',\''.join(level_labels), 1)
+
+        file_content.append(level_data)
+        file_content.append(level_label)
 
     #
     file_content.append("\n</script>")
@@ -375,6 +373,12 @@ def write_kanji_distance(db):
     f = open('C:/Users/Max/Documents/My Documents/PythonWorkspace/DramaCharCount/web/public_html/jdpt/jdpt_jlpt_dist.js', 'w', encoding="utf-8")
     with f:
         writer = f.write("\n".join(file_content))
+
+    g_maps["distance_jdtp_to_jlpt"] = {}
+    g_maps["distance_jltp_to_jdpt"] = {}
+    for char_uid, kanji in char_uid_to_kanji.items():
+        g_maps["distance_jdtp_to_jlpt"][char_uid] = kanji.dist_jdpt_to_jlpt
+        g_maps["distance_jltp_to_jdpt"][char_uid] = kanji.dist_jlpt_to_jdpt
 
 
 def load_dicts():
