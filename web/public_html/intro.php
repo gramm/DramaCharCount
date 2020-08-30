@@ -1,26 +1,64 @@
-<div class="blabla">
-Welcome to the
+<!DOCTYPE html>
+<html>
+<?php
+// Declaration of global variables 
+$page = "intro-content.php";
+?>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+<?php
+include('header.php');	
+?>
+
 <br />
-<h3>Japanese Drama Proficiency Test (JDPT)</h3>
-<br />
+<div id="gui" class="container  ">
+	<div class="row ">
+		<!-- A vertical navbar -->
+		<nav class="navbar bg-light navbar-light flex-column col-sm-2 ">
+			<!-- Links -->
+			<ul class="navbar-nav w-100 ">
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="intro.php">Introduction</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-5.php">Level 5</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-4.php">Level 4</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-3.php">Level 3</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-2.php">Level 2</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-1.php">Level 1</a>
+				</li>
+				<br/>
+			</ul>
+		</nav>
+		<div class="col ">
+			<?php
+			include($page);	
+			?>
+		</div>
+	</div>
 </div>
 
-<div class="blabla help text-left">
-The JDPT is a collection of the most used kanji in Japanese drama sorted in 5 levels like in JLPT lists you find on the web. 
 <br />
-It's a list I made for fun, 
-although it is quite interesting to see what words are much more common in dramas as in the everyday Japanese taught in the JLPT.
 
-<br />
-The number of kanji per level is as follow:
-</div>
-<table class="table table-sm">
-<tr><td>JDPT 5:</td><td>79 kanji</td></tr>
-<tr><td>JDPT 4:</td><td>166 kanji</td></tr>
-<tr><td>JDPT 3:</td><td>367 kanji</td></tr>
-<tr><td>JDPT 2:</td><td>367 kanji</td></tr>
-<tr><td>JDPT 1:</td><td>1222 kanji</td></tr>
-<tr><td>Total :</td><td>2201 kanji</td></tr>
-</table>
 
-</div>
+<?php
+include('footer.php');	
+?>
+</body>
+
+	
+</html>

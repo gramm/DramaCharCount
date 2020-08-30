@@ -49,7 +49,7 @@ function sortTable(n, level) {
         }
 
         dict[c] = x;
-		dict_c_to_r[c] = i;
+        dict_c_to_r[c] = i;
     }
     // Create items array
     var items = Object.keys(dict).map(function (key) {
@@ -62,41 +62,20 @@ function sortTable(n, level) {
     });
 
     dict = items;
-	let myRows = [];
-	var row = 0;
-	while(table.rows.length > 1){
-		myRows[row++] = table.rows[1];
-	    table.rows[0].parentNode.removeChild(table.rows[1]);
-	}
-		table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[0][0]] - 1], table.rows[0]);
-		table.rows[0].parentNode.insertBefore(table.rows[1], table.rows[0]);
-		
-    for (i = myRows.length - 1; i >= 0 ; i--) {
-		table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[i][0]] - 1], table.rows[1]);
-		//table.appendChild(myRows[dict_c_to_r[dict[i][0]] - 1]);
-	}
-	
-	//table.rows[0].parentNode.insertBefore(table.rows[0], table.rows[table.rows.length - 1]);
-	
-	
-	/*
-    for (i = 1; i < items.length; i++) {
-		
-		row_new = dict_c_to_r[items[i][0]];
-		cur_top = rows[i].getElementsByTagName("TD")[0].innerHTML;
-		dict_c_to_r[cur_top] = dict_c_to_r[items[i][0]]
-		
-		myRows = 
+    let myRows = [];
+    var row = 0;
+	// remove all and save
+    while (table.rows.length > 1) {
+        myRows[row++] = table.rows[1];
+        table.rows[0].parentNode.removeChild(table.rows[1]);
+    }
+	// re insert in sorted order
+    table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[0][0]] - 1], table.rows[0]);
+    table.rows[0].parentNode.insertBefore(table.rows[1], table.rows[0]);
 
-		
-		
-		//rows[1].parentNode.insertBefore(table.rows[row_new], table.rows[i]);
-		//rows[1].parentNode.insertBefore(table.rows[2], table.rows[row_new + 1]);
-		var shifted = table.rows[row_new];
-	    rows[0].parentNode.removeChild(table.rows[row_new]);
-		table.appendChild(shifted);
-    }	
-	*/
+    for (i = myRows.length - 1; i >= 0; i--) {
+        table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[i][0]] - 1], table.rows[1]);
+    }
 }
 </script>
 <nav class="navbar navbar-expand-sm bg-light navbar-light justify-content-center" >
@@ -107,13 +86,13 @@ function sortTable(n, level) {
   <!-- Links -->
   <ul class="navbar-nav ">
     <li class="nav-item ">
-      <a class="nav-link text-white" href="?page=char_count.php">Character Count</a>
+      <a class="nav-link text-white" href="char_count.php">Character Count</a>
     </li>
     <li class="nav-item">
       <a class="nav-link text-white">|</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link text-white" href="?page=jdpt.php">JDPT</a>
+      <a class="nav-link text-white" href="intro.php">JDPT</a>
     </li>
       <a class="nav-link text-white">|</a>
     </li>
@@ -126,7 +105,7 @@ function sortTable(n, level) {
     </li>
 	-->
     <li class="nav-item">
-      <a class="nav-link text-white" href="?page=about.php">About</a>
+      <a class="nav-link text-white" href="about.php">About</a>
     </li>
   </ul>
 </nav>

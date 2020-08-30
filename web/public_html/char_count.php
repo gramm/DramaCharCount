@@ -14,11 +14,18 @@ $wordTable = "hello";
 ?>
 
 <?php
+include('header.php');	
+?>
+<?php
 
 init();
 parseGetInfo();
 ?>
-<body>
+
+
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+
 	
 <div id="gui" class="container">
 	<div class="row">
