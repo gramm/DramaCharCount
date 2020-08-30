@@ -1,5 +1,17 @@
+
+	<div class="blabla help text-left">
+	This graph shows the distance in levels between a kanji from the JDTP and its equivalent level in the JLPT<br />
+	For example, if the distance is 3, a JDPT kanji level 5 (extremely common in drama) is only level 2 in the JLPT.
+	On the other side, a negative distance means that the kanji is learned earlier in the JLPT than in the JDPT.<br />
+	For each possible distance, only the ten most common kanji are shown.
+	</div>
 	<canvas id="jdtp_to_jlpt" width="20" height="10"></canvas>
 	<button onclick="resetZoom1()">Reset Zoom</button>
+	
+	
+	<div class="blabla help text-left">
+	This graph shows the distance in levels between a kanji from the JLPT and its equivalent level in the JDPT<br />
+	</div>
 	<canvas id="jltp_to_jdpt" width="20" height="10"></canvas>
 	<button onclick="resetZoom2()">Reset Zoom</button>
 	
@@ -13,16 +25,15 @@
 		};
 	</script>
 		
-		
 	<?php
 		include("jdpt_jlpt_dist.js");	
 	?>
 		
 	<script>
-	 var current_level = 4;
+	 var current_level = 5;
 	 var current_chart = 'jdtp_to_jlpt';
-	 var current_label = jdpt_4_to_jlpt_label;
-	 var current_data = jdpt_4_to_jlpt_data;
+	 var current_label = jdpt_5_to_jlpt_label;
+	 var current_data = jdpt_5_to_jlpt_data;
 	 var current_title = 'Distance of JDPT kanji compared to the equivalent JLPT level';
 	</script>
 	
@@ -32,8 +43,8 @@
 			
 	<script>
 	 var current_chart = 'jltp_to_jdpt';
-	 var current_label = jlpt_4_to_jdpt_label;
-	 var current_data = jlpt_4_to_jdpt_data;
+	 var current_label = jlpt_5_to_jdpt_label;
+	 var current_data = jlpt_5_to_jdpt_data;
 	 var current_title = 'Distance of JLPT kanji compared to the equivalent JDPT level';
 	</script>
 	
@@ -42,11 +53,7 @@
 	?>
 			
 			
-	<script>
-
-</script>
-
-	<div class="text-left blabla">
+	<div class="text-left blabla" >
 		<br /> 
 		Below you can find the list of all JDPT kanji for this level.
 		<br /> 
@@ -66,20 +73,20 @@
 	
 	//do word table
 	
-	echo "<table class='table table-bordered table-striped table-sm'>
+	echo "<table class='table table-bordered table-striped table-sm' id='myTable'>
 		<tr>
-			<th>Word</th>
-			<th>Count</th>
-			<th>Jlpt</th>
-			<th>Jōyō </th>
-			<th>Jdpt </th>
-			<th>Jdpt to Jlpt </th>
+			<th onclick='sortTable(0)'>Word</th>
+			<th onclick='sortTable(1)'>Count</th>
+			<th onclick='sortTable(2)'>Jlpt</th>
+			<th onclick='sortTable(3)'>Jōyō </th>
+			<th onclick='sortTable(4)'>Jdpt </th>
+			<th onclick='sortTable(5)'>Jdpt to Jlpt </th>
 		</tr>";
 
 		$wordTable = "";
 		while($row = mysqli_fetch_array($result))
 		{
-			if((int)$row['jdpt'] != 4){
+			if((int)$row['jdpt'] != 5){
 				continue;
 			}
 			
@@ -99,6 +106,7 @@
 				
 				if(((int)$row['dist_to_jlpt'])!=99) {echo "<td>" . $row['dist_to_jlpt'] . "</td>";}
 				else {echo "<td>-</td>";}
+				
 				
 			echo "</tr>";
 		}

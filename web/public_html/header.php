@@ -1,10 +1,24 @@
+
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <title>JDramaStuff - Learn Japanese using Vocabulary from Japanese Drama</title>
+</head> 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
 
+<?php
+	include('openConnection.php');	
+	openConnection();
+?>
+
 	<script>
-function sortTable(n) {
+function sortTable(n, level) {
   var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
   table = document.getElementById("myTable");
   switching = true;
@@ -30,8 +44,14 @@ function sortTable(n) {
 	  var iy = parseInt(y);
 	  if( isNaN(ix) == false){
 		  x = ix;
+	  }
+	  if( isNaN(iy) == false){
 		  y = iy;
 	  }
+	  if( x == "same level") { x = 0;}
+	  if( y == "same level") { y = 0;}
+	  if( x == "not in jlpt") { x = level;}
+	  if( y == "not in jlpt") { y = level;}
 	  
       /* Check if the two rows should switch place,
       based on the direction, asc or desc: */

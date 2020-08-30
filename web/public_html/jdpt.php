@@ -1,13 +1,4 @@
-<?php
-	if(empty($_GET["article"]))
-	{
-		$article="intro";
-	}
-	else
-	{
-		$article=$_GET["article"];
-	}
-?>
+
 <br />
 <div id="gui" class="container  ">
 	<div class="row ">
