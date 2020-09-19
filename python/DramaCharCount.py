@@ -370,7 +370,7 @@ def write_kanji_distance(db):
     #
     file_content.append("\n</script>")
 
-    f = open('C:/Users/Max/Documents/My Documents/PythonWorkspace/DramaCharCount/web/public_html/jdpt/jdpt_jlpt_dist.js', 'w', encoding="utf-8")
+    f = open('C:/Users/Max/Documents/My Documents/PythonWorkspace/DramaCharCount/web/public_html/jdpt_jlpt_dist.js', 'w', encoding="utf-8")
     with f:
         writer = f.write("\n".join(file_content))
 

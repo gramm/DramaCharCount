@@ -13,10 +13,6 @@
 	<br />	
 	
 	<table class="table table-sm table-stripped text-left" id="table_jdtp_to_jlpt">
-		<tr>
-			<th>Distance</th>
-			<th>Kanji(Count)</th>
-		</tr>
 	</table>
 	
 	<div class="blabla help text-left">
@@ -27,10 +23,6 @@
 	<button onclick="resetZoom2()">Reset Zoom</button>
 	<br />	
 	<table class="table table-sm table-stripped text-left" id="table_jltp_to_jdpt">
-		<tr>
-			<th>Distance</th>
-			<th>Kanji(Count)</th>
-		</tr>
 	</table>
 	
 	

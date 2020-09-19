@@ -2,7 +2,7 @@
 <html>
 <?php
 // Declaration of global variables 
-$page = "jdpt-2-content.php";
+$page = "jdpt-all-content.php";
 ?>
 
 <body class="d-flex flex-column min-vh-100 bg-light">
