@@ -5,6 +5,9 @@ from mysql.connector import Error
 
 from python.DccUtils import parse_args, load_dramas
 
+from sudachipy import tokenizer
+from sudachipy import dictionary
+
 g_maps = {}
 
 
@@ -41,7 +44,14 @@ class DramaWordCount:
 
 if __name__ == "__main__":
     print("DramaWordCount started")
-    dwc = DramaWordCount()
-    dwc.parse_args(sys.argv[1:])
-    dwc.connect()
+
+    tokenizer_obj = dictionary.Dictionary().create()
+    mode = tokenizer.Tokenizer.SplitMode.C
+    [m.surface() for m in tokenizer_obj.tokenize("国家公務員", mode)]
+    # => ['国家公務員']
+    print(tokenizer_obj.tokenize("附属", mode)[0].normalized_form())
+    # => ['国家', '公務', '員']
+    #dwc = DramaWordCount()
+    #dwc.parse_args(sys.argv[1:])
+    #dwc.connect()
     print("DramaWordCount successfully executed")
