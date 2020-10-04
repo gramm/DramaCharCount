@@ -3,7 +3,9 @@ import sys
 import mysql
 from mysql.connector import Error
 
-from python.DccUtils import parse_args
+from python.DccUtils import parse_args, load_dramas
+
+g_maps = {}
 
 
 class DramaWordCount:
@@ -32,6 +34,9 @@ class DramaWordCount:
         else:
             print("Could not connect to database, exiting...")
             sys.exit(2)
+
+    def load_dramas(self):
+        g_maps["drama_name_to_uid"] = load_dramas(self.args["path"])
 
 
 if __name__ == "__main__":

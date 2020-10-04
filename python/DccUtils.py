@@ -67,3 +67,14 @@ def parse_args(argv):
             print("Missing command line arguments {}".format(key))
             # sys.exit(2)
     return ret_dict
+
+
+def load_dramas(path):
+    drama_map = {}
+    subfolders = get_subfolders(path)
+    # insert dummy drama for all drama together with uid 1
+    uid = 2  # uid 0 is reserved for all dramas together
+    for subfolder in subfolders:
+        drama_map[subfolder] = uid
+        uid += 1
+    return drama_map
