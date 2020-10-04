@@ -1,6 +1,5 @@
 import concurrent.futures
 import csv
-import getopt
 import os
 import re
 import sys
@@ -11,7 +10,7 @@ import traceback
 import mysql.connector
 from mysql.connector import Error
 
-from python.DccUtils import get_subfolders, get_files, escape_sql
+from python.DccUtils import get_subfolders, get_files, escape_sql, parse_args
 
 g_maps = {}
 
@@ -26,104 +25,6 @@ def exception(e):
     else:
         print(e)
     traceback.print_exc()
-
-
-def parse_args(argv):
-    """
-    Parse the arguments for MySql connection
-    :param argv:
-    :return:
-    """
-    ret_dict = {
-        "sql_host": "",
-        "sql_user": "",
-        "sql_password": "",
-        "sql_database": "",
-        "path": ""
-    }
-    try:
-        opts, args = getopt.getopt(argv, "h:u:pw:db:pa", ["host=", "user=", "password=", "database=", "path="])
-    except getopt.GetoptError as err:
-        print("Could not parse program arguments")
-        print(str(err))  # will print something like "option -a not recognized"
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt in ('-h', '--host'):
-            ret_dict["sql_host"] = arg
-            print("sql_host = {}".format(ret_dict["sql_host"]))
-        elif opt in ('-u', '--user'):
-            ret_dict["sql_user"] = arg
-            print("sql_user = {}".format(ret_dict["sql_user"]))
-        elif opt in ('-pw', '--password'):
-            ret_dict["sql_password"] = arg
-            print("sql_password = {}".format(ret_dict["sql_password"]))
-        elif opt in ('-db', '--database'):
-            ret_dict["sql_database"] = arg
-            print("sql_database = {}".format(ret_dict["sql_database"]))
-        elif opt in ('-pa', '--path'):
-            ret_dict["path"] = arg
-            print("path = {}".format(ret_dict["path"]))
-        else:
-            print("Unknown argument {}".format(opt))
-            sys.exit(2)
-
-    for key, value in ret_dict.items():
-        if not value:
-            print("Missing command line arguments {}".format(key))
-            sys.exit(2)
-    return ret_dict
-
-
-def reset_tables(db):
-    mycursor = db.cursor()
-
-    # drop all tables
-    sql = "DROP TABLE IF EXISTS count"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS drama"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS kanji"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS kanji_info"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS kanji_flag"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS line"
-    mycursor.execute(sql)
-
-    sql = "DROP TABLE IF EXISTS kanji_to_line"
-    mycursor.execute(sql)
-
-    # create tables
-    sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE line (line_uid  SMALLINT PRIMARY KEY NOT NULL, value TEXT)"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
-    mycursor.execute(sql)
-
-    sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
-    mycursor.execute(sql)
 
 
 def create_dramas(db, path):
@@ -269,6 +170,7 @@ def count_and_upload_char(db, path):
     #        if re.match("[一-龯]", uid_to_char[char_uid]):
     #            writer.writerow([uid_to_char[char_uid], count])
 
+
 class Kanji:
     def __init__(self, char_uid):
         # could be optimized by having functions return the equivalent dict entries instead of duplicating them
@@ -344,7 +246,7 @@ def write_kanji_distance(db):
         file_content.append(level_data)
         file_content.append(level_label)
 
-    #plain copy paste ......
+    # plain copy paste ......
     for level in range(1, 6):
         level_points = []
         level_labels = []
@@ -526,8 +428,6 @@ def main(argv):
     else:
         print("Could not connect to database, exiting...")
         sys.exit(2)
-
-    reset_tables(db)
 
     start_time = time.time()
     create_dramas(db, args["path"])
