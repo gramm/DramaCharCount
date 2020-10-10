@@ -50,11 +50,12 @@ class DramaWordCount:
     def load_dramas(self):
         g_maps["drama_name_to_uid"] = load_dramas(self.args["path"])
 
-    def count_word_work(self, folder, lock):
+    @staticmethod
+    def count_word_work(folder, lock):
         sql = ""
 
         tokenizer_obj = dictionary.Dictionary().create()
-        mode = tokenizer.Tokenizer.SplitMode.A
+        mode = tokenizer.Tokenizer.SplitMode.C
 
         try:
             global g_maps
@@ -109,7 +110,7 @@ class DramaWordCount:
                 if char not in words_uid:
                     raise Exception('char not in uid : ')
             # use batch insert
-            sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+            sql = "INSERT INTO count_word (word_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
         except Exception as e:
             exception(e)
         print("count_word_work exited on {} in thread {}".format(folder, threading.get_ident()))
@@ -126,7 +127,7 @@ class DramaWordCount:
         g_maps["word_to_uid"] = {}
         g_maps["uid_to_word"] = {}
         g_maps["word_to_lines"] = {}
-        g_maps["char_uid_to_count"] = {}
+        g_maps["word_uid_to_count"] = {}
 
         subfolders = get_subfolders(path)
 
@@ -150,30 +151,30 @@ class DramaWordCount:
             sql_insert = "({},\'{}\')".format(uid, escape_sql(char))
             sql_inserts.append(sql_insert)
 
-        sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
+        sql = "INSERT INTO word (word_uid, value) VALUES {}".format(",".join(sql_inserts))
         if self.db:
             mycursor.execute(sql)
             self.db.commit()
 
         # upload total count by fetching the count of all dramas from database, summing the values, the uploading with drama uid 1
-        total_count = g_maps["char_uid_to_count"]
+        total_count = g_maps["word_uid_to_count"]
         if self.db:
-            mycursor.execute("SELECT * FROM count")
+            mycursor.execute("SELECT * FROM count_word")
         for result in mycursor.fetchall():
-            kanji_uid = result["kanji_uid"]
+            word_uid = result["word_uid"]
             count = result["count"]
-            if kanji_uid not in total_count:
-                total_count[kanji_uid] = count
+            if word_uid not in total_count:
+                total_count[word_uid] = count
             else:
-                total_count[kanji_uid] = total_count[kanji_uid] + count
+                total_count[word_uid] = total_count[word_uid] + count
 
         sorted(total_count.items(), key=lambda x: x[1], reverse=True)  # sort total_count by values descencding i.e. by count
 
         sql_inserts = []
-        for char_uid, count in total_count.items():
-            sql_insert = "({},{},{})".format(char_uid, 1, count)
+        for word_uid, count in total_count.items():
+            sql_insert = "({},{},{})".format(word_uid, 1, count)
             sql_inserts.append(sql_insert)
-        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+        sql = "INSERT INTO count_word (word_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
 
         if self.db:
             mycursor.execute(sql)
@@ -185,9 +186,9 @@ class DramaWordCount:
         f = open('C:/Users/Max/Documents/_tmp/count.csv', 'w', encoding="utf-8", newline='')
         with f:
             writer = csv.writer(f)
-            for char_uid, count in total_count.items():
-                writer.writerow([uid_to_word[char_uid], count])
-                # if re.match("[一-龯]", uid_to_word[char_uid]):
+            for word_uid, count in total_count.items():
+                writer.writerow([uid_to_word[word_uid], count])
+                # if re.match("[一-龯]", uid_to_word[word_uid]):
 
 
 if __name__ == "__main__":

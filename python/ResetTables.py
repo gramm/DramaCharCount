@@ -25,10 +25,22 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS kanji_flag"
     mycursor.execute(sql)
 
+    sql = "DROP TABLE IF EXISTS word"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS word_info"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS word_flag"
+    mycursor.execute(sql)
+
     sql = "DROP TABLE IF EXISTS line"
     mycursor.execute(sql)
 
     sql = "DROP TABLE IF EXISTS kanji_to_line"
+    mycursor.execute(sql)
+
+    sql = "DROP TABLE IF EXISTS word_to_line"
     mycursor.execute(sql)
 
     # create tables
@@ -38,16 +50,28 @@ def reset_tables(db):
     sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
     mycursor.execute(sql)
 
+    sql = "CREATE TABLE word (word_uid SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255))"
+    mycursor.execute(sql)
+
     sql = "CREATE TABLE line (line_uid  SMALLINT PRIMARY KEY NOT NULL, value TEXT)"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
     mycursor.execute(sql)
 
+    sql = "CREATE TABLE word_to_line (word_uid SMALLINT, line_uid SMALLINT , INDEX(word_uid), INDEX(line_uid))"
+    mycursor.execute(sql)
+
     sql = "CREATE TABLE count (kanji_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(kanji_uid), INDEX(drama_uid))"
     mycursor.execute(sql)
 
+    sql = "CREATE TABLE count_word (word_uid SMALLINT, drama_uid SMALLINT , count INT, INDEX(word_uid), INDEX(drama_uid))"
+    mycursor.execute(sql)
+
     sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+    mycursor.execute(sql)
+
+    sql = "CREATE TABLE word_info (word_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
