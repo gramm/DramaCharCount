@@ -1,5 +1,6 @@
 import getopt
 import os
+import re
 import sys
 
 
@@ -67,6 +68,10 @@ def parse_args(argv):
             print("Missing command line arguments {}".format(key))
             # sys.exit(2)
     return ret_dict
+
+
+def is_readable(val):
+    return re.search("[一-龠]+|[ぁ-ゔ]+|[ァ-ヴー]+|[a-zA-Z]+|[ａ-ｚＡ-Ｚ]+|[々〆〤]+", val)
 
 
 def load_dramas(path):

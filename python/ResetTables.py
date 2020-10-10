@@ -13,6 +13,9 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS count"
     mycursor.execute(sql)
 
+    sql = "DROP TABLE IF EXISTS count_word"
+    mycursor.execute(sql)
+
     sql = "DROP TABLE IF EXISTS drama"
     mycursor.execute(sql)
 
@@ -78,6 +81,9 @@ def reset_tables(db):
     mycursor.execute(sql)
 
     sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
+    mycursor.execute(sql)
+
+    sql = "INSERT INTO word_flag (id, value) VALUES (1,'Readable'),(2,'SingleKana'),(3,'Unreadable')"
     mycursor.execute(sql)
 
 

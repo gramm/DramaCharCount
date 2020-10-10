@@ -8,10 +8,12 @@ from logging import exception
 import mysql
 from mysql.connector import Error
 
-from python.DccUtils import parse_args, load_dramas, get_subfolders, escape_sql, get_files
+from python.DccUtils import parse_args, load_dramas, get_subfolders, escape_sql, get_files, is_readable
 
 from sudachipy import tokenizer
 from sudachipy import dictionary
+
+from python.DramaCharCount import is_kanji
 
 g_maps = {}
 
@@ -190,6 +192,39 @@ class DramaWordCount:
                 writer.writerow([uid_to_word[word_uid], count])
                 # if re.match("[一-龯]", uid_to_word[word_uid]):
 
+    def update_word_info(self):
+        global g_maps
+
+        jlpt_level = {}#g_maps["word_uid_to_jlpt"]
+        jdpt_level = {}#g_maps["word_uid_to_jdpt"]
+        jouyou_level = {}#g_maps["word_uid_to_jouyou"]
+        distance_jdtp_to_jlpt = {}#g_maps["distance_jdtp_to_jlpt"]
+        distance_jltp_to_jdpt = {}#g_maps["distance_jltp_to_jdpt"]
+
+        sql_inserts = []
+        for value, word_uid in g_maps["word_to_uid"].items():
+            cur_jlpt_level = jlpt_level[word_uid] if word_uid in jlpt_level else 0
+            cur_jouyou_level = jouyou_level[word_uid] if word_uid in jouyou_level else 0
+            cur_jdpt_level = jdpt_level[word_uid] if word_uid in jdpt_level else 0
+            cur_distance_jdtp_to_jlpt = distance_jdtp_to_jlpt[word_uid] if word_uid in distance_jdtp_to_jlpt else 99
+            cur_distance_jltp_to_jdpt = distance_jltp_to_jdpt[word_uid] if word_uid in distance_jltp_to_jdpt else 99
+
+            flag = 0
+            if is_readable(value):
+                flag = 1
+            elif re.match("[ぁ-んァ-ン]", value):
+                flag = 2
+            else:
+                flag = 3
+
+            sql_insert = "({},{},{},{},{},{},{})".format(word_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, cur_distance_jdtp_to_jlpt, cur_distance_jltp_to_jdpt, flag)
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO word_info (word_uid, jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt, flag) VALUES {}".format(",".join(sql_inserts))
+        if self.db:
+            mycursor = self.db.cursor()
+            mycursor.execute(sql)
+            self.db.commit()
+
 
 if __name__ == "__main__":
     print("DramaWordCount started")
@@ -199,5 +234,6 @@ if __name__ == "__main__":
     dwc.connect()
     dwc.load_dramas()
     dwc.count_and_upload_words()
+    dwc.update_word_info()
 
     print("DramaWordCount successfully executed")
