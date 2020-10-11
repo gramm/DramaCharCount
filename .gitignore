@@ -1,2 +1,4 @@
 .idea/
 python/.idea/
+python/__pycache__/
+web/public_html/openConnection.php
