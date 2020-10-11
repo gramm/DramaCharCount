@@ -181,11 +181,12 @@ function displayLines()
 	select a.value
 	from line a 
 	INNER JOIN word_to_line b
-	ON a.line_uid=b.word_uid
+	ON a.line_uid=b.line_uid
 	WHERE (b.word_uid = ".$selectedWord.")
 	";
 	$result = mysqli_query($con,$query);
 	
+	echo($query);
 	
 	$end_time = microtime(true); 
 	$execution_time = ($end_time - $start_time); 

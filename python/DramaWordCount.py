@@ -3,14 +3,18 @@ import csv
 import re
 import sys
 import threading
+import time
 from logging import exception
 
 import mysql
+import sudachipy
 from mysql.connector import Error
+from sudachipy.dictionarylib.wordinfo import WordInfo
+from sudachipy.morpheme import Morpheme
 
 from python.DccUtils import parse_args, load_dramas, get_subfolders, escape_sql, get_files, is_readable
 
-from sudachipy import tokenizer
+from sudachipy import tokenizer, morpheme
 from sudachipy import dictionary
 
 from python.DramaCharCount import is_kanji
@@ -195,11 +199,11 @@ class DramaWordCount:
     def update_word_info(self):
         global g_maps
 
-        jlpt_level = {}#g_maps["word_uid_to_jlpt"]
-        jdpt_level = {}#g_maps["word_uid_to_jdpt"]
-        jouyou_level = {}#g_maps["word_uid_to_jouyou"]
-        distance_jdtp_to_jlpt = {}#g_maps["distance_jdtp_to_jlpt"]
-        distance_jltp_to_jdpt = {}#g_maps["distance_jltp_to_jdpt"]
+        jlpt_level = {}  # g_maps["word_uid_to_jlpt"]
+        jdpt_level = {}  # g_maps["word_uid_to_jdpt"]
+        jouyou_level = {}  # g_maps["word_uid_to_jouyou"]
+        distance_jdtp_to_jlpt = {}  # g_maps["distance_jdtp_to_jlpt"]
+        distance_jltp_to_jdpt = {}  # g_maps["distance_jltp_to_jdpt"]
 
         sql_inserts = []
         for value, word_uid in g_maps["word_to_uid"].items():
@@ -228,6 +232,32 @@ class DramaWordCount:
             mycursor.execute(sql)
             self.db.commit()
 
+    def upload_lines(self):
+        global g_maps
+        word_to_line = g_maps["word_to_lines"]
+        word_to_uid = g_maps["word_to_uid"]
+        line_to_uid = {}
+
+        # upload line values
+        for lines in word_to_line.values():
+            for line in lines:
+                if line not in line_to_uid:
+                    line_to_uid[line] = len(line_to_uid.keys()) + 1
+
+        # upload char to line reference
+        sql_inserts = []
+        for word, lines in word_to_line.items():
+            if word is "\n":
+                continue
+            for line in lines:
+                sql_insert = "({},{})".format(word_to_uid[word], line_to_uid[line])
+                sql_inserts.append(sql_insert)
+        sql = "INSERT INTO word_to_line (word_uid, line_uid) VALUES {}".format(",".join(sql_inserts))
+        if self.db:
+            mycursor = self.db.cursor()
+            mycursor.execute(sql)
+            self.db.commit()
+
 
 if __name__ == "__main__":
     print("DramaWordCount started")
@@ -236,7 +266,20 @@ if __name__ == "__main__":
     dwc.parse_args(sys.argv[1:])
     dwc.connect()
     dwc.load_dramas()
+
+    start_time = time.time()
     dwc.count_and_upload_words()
+    stop_time = time.time()
+    print("count_and_upload_words in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
+    dwc.upload_lines()
+    stop_time = time.time()
+    print("upload_lines in {:2.3f} seconds".format(stop_time - start_time))
+
+    start_time = time.time()
     dwc.update_word_info()
+    stop_time = time.time()
+    print("update_word_info in {:2.3f} seconds".format(stop_time - start_time))
 
     print("DramaWordCount successfully executed")
