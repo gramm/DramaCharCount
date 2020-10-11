@@ -209,13 +209,16 @@ class DramaWordCount:
             cur_distance_jdtp_to_jlpt = distance_jdtp_to_jlpt[word_uid] if word_uid in distance_jdtp_to_jlpt else 99
             cur_distance_jltp_to_jdpt = distance_jltp_to_jdpt[word_uid] if word_uid in distance_jltp_to_jdpt else 99
 
-            flag = 0
-            if is_readable(value):
-                flag = 1
-            elif re.match("[ぁ-んァ-ン]", value):
-                flag = 2
-            else:
+            if not is_readable(value):
                 flag = 3
+            else:
+                if re.match("[ぁ-んァ-ン]", value):
+                    if len(value) == 1:
+                        flag = 4
+                    else:
+                        flag = 2
+                else:
+                    flag = 1
 
             sql_insert = "({},{},{},{},{},{},{})".format(word_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, cur_distance_jdtp_to_jlpt, cur_distance_jltp_to_jdpt, flag)
             sql_inserts.append(sql_insert)

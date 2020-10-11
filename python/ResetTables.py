@@ -80,10 +80,13 @@ def reset_tables(db):
     sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
     mycursor.execute(sql)
 
+    sql = "CREATE TABLE word_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
+    mycursor.execute(sql)
+
     sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
     mycursor.execute(sql)
 
-    sql = "INSERT INTO word_flag (id, value) VALUES (1,'Readable'),(2,'SingleKana'),(3,'Unreadable')"
+    sql = "INSERT INTO word_flag (id, value) VALUES (1,'Readable'),(2,'SingleKana'),(3,'Unreadable'),(4,'One_Kana'),(5,'Excluded')"
     mycursor.execute(sql)
 
 
