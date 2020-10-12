@@ -7,6 +7,8 @@ from python.DccUtils import parse_args
 
 
 def reset_tables(db):
+    ans = input("Choice: 1=all, 2=char, 3=word, 4=lines");
+
     mycursor = db.cursor()
 
     # drop all tables
@@ -37,9 +39,6 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS word_flag"
     mycursor.execute(sql)
 
-    sql = "DROP TABLE IF EXISTS line"
-    mycursor.execute(sql)
-
     sql = "DROP TABLE IF EXISTS kanji_to_line"
     mycursor.execute(sql)
 
@@ -54,9 +53,6 @@ def reset_tables(db):
     mycursor.execute(sql)
 
     sql = "CREATE TABLE word (word_uid SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255))"
-    mycursor.execute(sql)
-
-    sql = "CREATE TABLE line (line_uid  SMALLINT PRIMARY KEY NOT NULL, value TEXT)"
     mycursor.execute(sql)
 
     sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
