@@ -52,7 +52,7 @@ def parse_args(argv):
             print("sql_user = {}".format(ret_dict["sql_user"]))
         elif opt in ('-pw', '--password'):
             ret_dict["sql_password"] = arg
-            print("sql_password = {}".format(ret_dict["sql_password"]))
+            print("sql_password = ?")  # .format(ret_dict["sql_password"]))
         elif opt in ('-db', '--database'):
             ret_dict["sql_database"] = arg
             print("sql_database = {}".format(ret_dict["sql_database"]))
