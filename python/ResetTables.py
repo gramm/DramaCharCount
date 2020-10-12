@@ -18,8 +18,6 @@ def reset_tables(db):
     sql = "DROP TABLE IF EXISTS count_word"
     mycursor.execute(sql)
 
-    sql = "DROP TABLE IF EXISTS drama"
-    mycursor.execute(sql)
 
     sql = "DROP TABLE IF EXISTS kanji"
     mycursor.execute(sql)
@@ -46,9 +44,6 @@ def reset_tables(db):
     mycursor.execute(sql)
 
     # create tables
-    sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
-    mycursor.execute(sql)
-
     sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
     mycursor.execute(sql)
 

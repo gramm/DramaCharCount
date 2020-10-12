@@ -14,6 +14,14 @@ class JdsDatabase:
             print(__class__.__name__ + " not connected to database")
         return self.db
 
+    @staticmethod
+    def __escape_sql(sql):
+        chars = ['\\', '\'', '\"']
+        for c in chars:
+            sql = sql.replace(c, '\\' + c)
+        sql = sql.replace("\n", "")
+        return sql
+
     def connect(self, args):
         try:
             host = args["sql_host"]
@@ -53,6 +61,15 @@ class JdsDatabase:
         sql = "CREATE TABLE line (line_uid  INT UNSIGNED PRIMARY KEY NOT NULL, value TEXT)"
         self.cursor.execute(sql)
 
+    def reset_dramas(self):
+        print("Dropping table 'drama'")
+        sql = "DROP TABLE IF EXISTS drama"
+        self.cursor.execute(sql)
+
+        print("Creating table 'drama'")
+        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255))"
+        self.cursor.execute(sql)
+
     def push_lines(self, lines):
         if not self.__check_state():
             return
@@ -60,7 +77,7 @@ class JdsDatabase:
         sql_inserts = []
         packet_size = 0
         for uid, line in lines.items():
-            line = self.escape_sql(line)
+            line = self.__escape_sql(line)
             sql_insert = "({},'{}')".format(uid, line)
 
             # push if we will reach max_allowed_packets
@@ -77,14 +94,15 @@ class JdsDatabase:
         # push the remaining part
         if len(sql_inserts) > 0:
             sql = "INSERT INTO line (line_uid, value) VALUES {}".format(",".join(sql_inserts))
-            print(sql)
             self.cursor.execute(sql)
             self.db.commit()
 
-    @staticmethod
-    def escape_sql(sql):
-        chars = ['\\', '\'', '\"']
-        for c in chars:
-            sql = sql.replace(c, '\\' + c)
-        sql = sql.replace("\n", "")
-        return sql
+    def push_dramas(self, dramas):
+        sql_inserts = []
+        for uid, drama in dramas.items():
+            drama = self.__escape_sql(drama)
+            sql_insert = "({},'{}')".format(uid, drama)
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO drama (drama_uid, name) VALUES {}".format(",".join(sql_inserts))
+        self.cursor.execute(sql)
+        self.db.commit()
