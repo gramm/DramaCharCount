@@ -2,6 +2,7 @@ import getopt
 import os
 import re
 import sys
+import traceback
 
 
 def get_subfolders(path):
@@ -16,11 +17,12 @@ def get_files(path):
     return retlist
 
 
-def escape_sql(sql):
-    chars = ['\\', '\'', '\"']
-    for c in chars:
-        sql = sql.replace(c, '\\' + c)
-    return sql
+def exception(e):
+    if hasattr(e, 'message'):
+        print(e.message)
+    else:
+        print(e)
+    traceback.print_exc()
 
 
 def parse_args(argv):
@@ -72,14 +74,3 @@ def parse_args(argv):
 
 def is_readable(val):
     return re.search("[一-龠]+|[ぁ-ゔ]+|[ァ-ヴー]+|[a-zA-Z]+|[ａ-ｚＡ-Ｚ]+|[々〆〤]+", val)
-
-
-def load_dramas(path):
-    drama_map = {}
-    subfolders = get_subfolders(path)
-    # insert dummy drama for all drama together with uid 1
-    uid = 2  # uid 0 is reserved for all dramas together
-    for subfolder in subfolders:
-        drama_map[subfolder] = uid
-        uid += 1
-    return drama_map

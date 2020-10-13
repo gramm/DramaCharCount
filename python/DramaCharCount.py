@@ -19,14 +19,6 @@ def is_kanji(c):
     return re.match("[一-龯]", c)
 
 
-def exception(e):
-    if hasattr(e, 'message'):
-        print(e.message)
-    else:
-        print(e)
-    traceback.print_exc()
-
-
 def create_dramas(db, path):
     global g_maps
     drama_map = {}

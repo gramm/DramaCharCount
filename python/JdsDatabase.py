@@ -1,7 +1,10 @@
 import mysql
 from mysql.connector import Error
 
+from python import JdsChar
+from python.DccUtils import exception
 from python.JdsDrama import JdsDrama
+from python.JdsLine import JdsLine
 
 
 class JdsDatabase:
@@ -48,7 +51,9 @@ class JdsDatabase:
                 database=database,
                 user=user,
                 password=password,
-                connection_timeout=connection_timeout
+                connection_timeout=connection_timeout,
+                charset='utf8',
+                autocommit=True
             )
         except Error as e:
             print("Error while connecting to MySQL", e)
@@ -56,34 +61,11 @@ class JdsDatabase:
 
         if JdsDatabase.__db.is_connected():
             print("Database connection successful")
-            JdsDatabase.__cursor = JdsDatabase.__db.cursor()
+            JdsDatabase.__cursor = JdsDatabase.__db.cursor(dictionary=True)
             return True
         else:
             print("Could not connect to database")
             return False
-
-    def reset_lines(self):
-        if not self.__check_state():
-            return
-
-        print("Dropping table 'line'")
-        sql = "DROP TABLE IF EXISTS line"
-        self.__cursor.execute(sql)
-
-        print("Creating table 'line'")
-        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, value TEXT, INDEX(line_uid), INDEX(drama_uid))"
-        self.__cursor.execute(sql)
-
-    def reset_dramas(self):
-        if not self.__check_state():
-            return
-        print("Dropping table 'drama'")
-        sql = "DROP TABLE IF EXISTS drama"
-        self.__cursor.execute(sql)
-
-        print("Creating table 'drama'")
-        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), INDEX(drama_uid))"
-        self.__cursor.execute(sql)
 
     def push_lines(self, lines):
         if not self.__check_state():
@@ -135,6 +117,102 @@ class JdsDatabase:
             result = JdsDatabase.__cursor.fetchone()
 
         if result:
-            return JdsDrama(result[0], result[1])  # fixme: better way to access columns
+            return JdsDrama(result['drama_uid'], result['name'])
         else:
             return None
+
+    def get_all_dramas(self):
+        if not JdsDatabase.__check_state():
+            return
+        self.__cursor.execute("SELECT * FROM drama")
+        results = JdsDatabase.__cursor.fetchall()
+        dramas = []
+        for result in results:
+            dramas.append(JdsDrama(result['drama_uid'], result['name']))
+        return dramas
+
+    def get_lines_for_drama(self, drama):
+        if not JdsDatabase.__check_state():
+            return
+        self.__cursor.execute("SELECT * FROM line WHERE drama_uid={}".format(drama.uid))
+        results = JdsDatabase.__cursor.fetchall()
+        lines = []
+        try:
+            for result in results:
+                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value'].decode("utf-8")))
+        except Exception as e:
+            exception(e)
+        return lines
+
+    def reset_lines(self):
+        if not self.__check_state():
+            return
+
+        print("Dropping table 'line'")
+        sql = "DROP TABLE IF EXISTS line"
+        self.__cursor.execute(sql)
+
+        print("Creating table 'line'")
+        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, value TEXT, INDEX(line_uid), INDEX(drama_uid))"
+        self.__cursor.execute(sql)
+
+    def reset_dramas(self):
+        if not self.__check_state():
+            return
+        print("Dropping table 'drama'")
+        sql = "DROP TABLE IF EXISTS drama"
+        self.__cursor.execute(sql)
+
+        print("Creating table 'drama'")
+        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), INDEX(drama_uid))"
+        self.__cursor.execute(sql)
+
+    def reset_chars(self):
+        if not self.__check_state():
+            return
+        print("Dropping chars table ")
+
+        sql = "DROP TABLE IF EXISTS count"
+        self.__cursor.execute(sql)
+
+        sql = "DROP TABLE IF EXISTS kanji"
+        self.__cursor.execute(sql)
+
+        sql = "DROP TABLE IF EXISTS kanji_info"
+        self.__cursor.execute(sql)
+
+        sql = "DROP TABLE IF EXISTS kanji_flag"
+        self.__cursor.execute(sql)
+
+        sql = "DROP TABLE IF EXISTS kanji_to_line"
+        self.__cursor.execute(sql)
+        print("Creating chars table")
+
+        sql = "CREATE TABLE count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
+        self.__cursor.execute(sql)
+
+        sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
+        self.__cursor.execute(sql)
+
+    def push_chars(self, chars):
+        if len(chars) is 0:
+            return
+        sql_inserts = []
+        for char, count in chars.items():
+            sql_insert = "({},{},{})".format(char.uid, char.drama_uid, count)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor.execute(sql)

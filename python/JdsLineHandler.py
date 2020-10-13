@@ -12,11 +12,6 @@ class JdsLineHandler:
         self.args = parse_args(argv)
         self.db = JdsDatabase()
 
-    @staticmethod
-    def __read_lines_worker(subfolder, position):
-        print("{} {}".format(subfolder, position))
-        pass
-
     def reset(self):
         return self.db.reset_lines()
 
