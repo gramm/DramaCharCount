@@ -40,6 +40,10 @@ class JdsCharHandler:
     def read_chars(self):
         dramas = self.db.get_all_dramas()
 
+        # for drama in dramas:
+        #    chars = self.read_chars_worker(drama)
+        #    self.db.push_chars(chars)
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = {}
             for drama in dramas:

@@ -1,7 +1,8 @@
+from threading import Lock
+
 import mysql
 from mysql.connector import Error
 
-from python import JdsChar
 from python.DccUtils import exception
 from python.JdsDrama import JdsDrama
 from python.JdsLine import JdsLine
@@ -10,6 +11,7 @@ from python.JdsLine import JdsLine
 class JdsDatabase:
     __db = None
     __cursor = None
+    __lock = None
 
     def __init__(self):
         self.max_allowed_packets = 1048576  # fixme: get from SQL (SHOW VARIABLES LIKE 'max_allowed_packet')
@@ -32,6 +34,7 @@ class JdsDatabase:
 
     @staticmethod
     def connect(args):
+        JdsDatabase.__lock = Lock()
         if args:
             host = args["sql_host"]
             database = args["sql_database"]
@@ -67,6 +70,21 @@ class JdsDatabase:
             print("Could not connect to database")
             return False
 
+    def cursor_execute_thread_safe(self, sql):
+        with JdsDatabase.__lock:
+            self.__cursor.execute(sql)
+            self.__db.commit()
+
+    def cursor_execute_fetchone_thread_safe(self, sql):
+        with JdsDatabase.__lock:
+            self.__cursor.execute(sql)
+            return JdsDatabase.__cursor.fetchone()
+
+    def cursor_execute_fetchall_thread_safe(self, sql):
+        with JdsDatabase.__lock:
+            self.__cursor.execute(sql)
+            return JdsDatabase.__cursor.fetchall()
+
     def push_lines(self, lines):
         if not self.__check_state():
             return
@@ -80,8 +98,7 @@ class JdsDatabase:
             # push if we will reach max_allowed_packets
             if (packet_size + len(sql_insert)) > self.max_allowed_packets:
                 sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
-                self.__cursor.execute(sql)
-                self.__db.commit()
+                self.cursor_execute_thread_safe(sql)
                 sql_inserts.clear()
                 packet_size = 0
 
@@ -91,8 +108,7 @@ class JdsDatabase:
         # push the remaining part
         if len(sql_inserts) > 0:
             sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
-            self.__cursor.execute(sql)
-            self.__db.commit()
+            self.cursor_execute_thread_safe(sql)
 
     def push_dramas(self, dramas):
         if not self.__check_state():
@@ -103,18 +119,17 @@ class JdsDatabase:
             sql_insert = "({},'{}')".format(drama.uid, drama_value)
             sql_inserts.append(sql_insert)
         sql = "INSERT INTO drama (drama_uid, name) VALUES {}".format(",".join(sql_inserts))
-        self.__cursor.execute(sql)
-        self.__db.commit()
+        self.cursor_execute_thread_safe(sql)
 
-    @staticmethod
-    def get_drama(name_or_uid):
+    def get_drama(self, name_or_uid):
         if not JdsDatabase.__check_state():
             return
         if type(name_or_uid) is 'int':
-            pass
+            sql = "SELECT * FROM drama WHERE drama_uid='{}'".format(name_or_uid)
+            result = self.cursor_execute_fetchone_thread_safe(sql)
         else:
-            JdsDatabase.__cursor.execute("SELECT * FROM drama WHERE name='{}'".format(JdsDatabase.__escape_sql(name_or_uid)))
-            result = JdsDatabase.__cursor.fetchone()
+            sql = "SELECT * FROM drama WHERE name='{}'".format(JdsDatabase.__escape_sql(name_or_uid))
+            result = self.cursor_execute_fetchone_thread_safe(sql)
 
         if result:
             return JdsDrama(result['drama_uid'], result['name'])
@@ -124,8 +139,8 @@ class JdsDatabase:
     def get_all_dramas(self):
         if not JdsDatabase.__check_state():
             return
-        self.__cursor.execute("SELECT * FROM drama")
-        results = JdsDatabase.__cursor.fetchall()
+        sql = "SELECT * FROM drama"
+        results = self.cursor_execute_fetchall_thread_safe(sql)
         dramas = []
         for result in results:
             dramas.append(JdsDrama(result['drama_uid'], result['name']))
@@ -134,8 +149,8 @@ class JdsDatabase:
     def get_lines_for_drama(self, drama):
         if not JdsDatabase.__check_state():
             return
-        self.__cursor.execute("SELECT * FROM line WHERE drama_uid={}".format(drama.uid))
-        results = JdsDatabase.__cursor.fetchall()
+        sql = "SELECT * FROM line WHERE drama_uid={}".format(drama.uid)
+        results = self.cursor_execute_fetchall_thread_safe(sql)
         lines = []
         try:
             for result in results:
@@ -215,4 +230,4 @@ class JdsDatabase:
             sql_inserts.append(sql_insert)
 
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
-        self.__cursor.execute(sql)
+        self.cursor_execute_thread_safe(sql)
