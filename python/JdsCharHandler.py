@@ -20,7 +20,8 @@ class JdsCharHandler:
         jds_lines = self.db.get_lines_for_drama(drama)
         for jds_line in jds_lines:
             for char in jds_line.value:
-                jds_char = JdsChar(char, drama.uid)
+                jds_char = JdsChar(char)
+                jds_char.drama_uid = drama.uid
                 try:
                     # increment count for this drama
                     if jds_char in chars:
@@ -50,7 +51,8 @@ class JdsCharHandler:
                 futures[drama] = executor.submit(self.read_chars_worker, drama)
             for future in concurrent.futures.as_completed(futures.values()):
                 chars = future.result()
-                self.db.push_chars(chars)
+                self.db.push_chars_count(chars)
+        self.db.push_chars()
 
 
 if __name__ == "__main__":

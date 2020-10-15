@@ -4,6 +4,7 @@ import mysql
 from mysql.connector import Error
 
 from python.DccUtils import exception
+from python.JdsChar import JdsChar
 from python.JdsDrama import JdsDrama
 from python.JdsLine import JdsLine
 
@@ -206,7 +207,7 @@ class JdsDatabase:
         sql = "CREATE TABLE count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji (kanji_uid SMALLINT PRIMARY KEY NOT NULL, value NCHAR(1))"
+        sql = "CREATE TABLE kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value NCHAR(1))"
         self.__cursor.execute(sql)
 
         sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
@@ -221,12 +222,45 @@ class JdsDatabase:
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
         self.__cursor.execute(sql)
 
-    def push_chars(self, chars):
+    def push_chars_count(self, chars):
         if len(chars) is 0:
             return
         sql_inserts = []
         for char, count in chars.items():
             sql_insert = "({},{},{})".format(char.uid, char.drama_uid, count)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+        self.cursor_execute_thread_safe(sql)
+        sql_inserts.clear()
+
+    def push_chars(self):
+        sql = "SELECT * FROM count"
+        results = self.cursor_execute_fetchall_thread_safe(sql)
+
+        # sum everything
+        chars = {}
+        counts = {}
+        for result in results:
+            kanji_uid = result["kanji_uid"]
+            count = result["count"]
+            if kanji_uid not in chars:
+                chars[kanji_uid] = JdsChar(chr(kanji_uid))
+                counts[kanji_uid] = 0
+            counts[kanji_uid] += count
+
+        # push kanji
+        sql_inserts = []
+        for char in chars.values():
+            sql_insert = "({},'{}')".format(char.uid, self.__escape_sql(char.value))
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
+        self.cursor_execute_thread_safe(sql)
+
+        # push total count
+        sql_inserts = []
+        for uid, count in counts.items():
+            sql_insert = "({},{},{})".format(uid, 0, count)
             sql_inserts.append(sql_insert)
 
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))

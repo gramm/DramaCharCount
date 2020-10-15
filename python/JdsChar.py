@@ -13,11 +13,11 @@ class JdsChar:
             return self.__key() == other.__key()
         return NotImplemented
 
-    def __init__(self, value, drama_uid):
+    def __init__(self, value):
         self.value = value
-        self.drama_uid = drama_uid
         self.uid = ord(value)
         self.lines = set()
+        self.drama_uid = None
 
     def add_line_ref(self, line_uid):
         self.lines.add(line_uid)
