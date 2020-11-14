@@ -2,8 +2,6 @@
 
 function drawJdptTable($con, $level)
 {
-	// first join selects all kanji used in this drama
-	// second join merges jlpt to this selection but keeps only allowed jlpt
 	$query = "
 	SELECT * from count, kanji_info, kanji
 	WHERE count.drama_uid = 1 AND count.kanji_uid = kanji_info.kanji_uid  AND kanji.kanji_uid = kanji_info.kanji_uid
@@ -22,7 +20,9 @@ function drawJdptTable($con, $level)
 			<th onclick='sortTable(2, ".$level.")'>Jlpt</th>
 			<th onclick='sortTable(3, ".$level.")'>Jōyō </th>
 			<th onclick='sortTable(4, ".$level.")'>Jdpt </th>
-			<th onclick='sortTable(5, ".$level.")'>Jdpt to Jlpt </th>
+			<th onclick='sortTable(5, ".$level.")'>Jlpt pos</th>
+			<th onclick='sortTable(6, ".$level.")'>Jōyō pos</th>
+			<th onclick='sortTable(7, ".$level.")'>Jdpt pos</th>
 		</tr>";
 
 		$wordTable = "";
@@ -46,11 +46,21 @@ function drawJdptTable($con, $level)
 				if(((int)$row['jdpt'])>0) {echo "<td>" . $row['jdpt'] . "</td>";}
 				else {echo "<td>-</td>";}
 				
+				if(((int)$row['jlpt_pos'])>0) {echo "<td>" . $row['jlpt_pos'] . "</td>";}
+				else {echo "<td>-</td>";}
 				
+				if(((int)$row['jouyou_pos'])>0) {echo "<td>" . $row['jouyou_pos'] . "</td>";}
+				else {echo "<td>-</td>";}
+				
+				if(((int)$row['jdpt_pos'])>0) {echo "<td>" . $row['jdpt_pos'] . "</td>";}
+				else {echo "<td>-</td>";}
+				
+				/*
 				if(((int)$row['dist_to_jlpt']) == 0) {echo "<td>" . "Same level" . "</td>";}
 				else if(((int)$row['dist_to_jlpt']) == $level) {echo "<td>" . "Not in JLPT" . "</td>";}
 				else if(((int)$row['dist_to_jlpt'])!=99) {echo "<td>" . $row['dist_to_jlpt'] . "</td>";}
 				else {echo "<td>-</td>";}
+				*/
 				
 				
 			echo "</tr>";

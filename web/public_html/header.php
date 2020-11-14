@@ -20,6 +20,7 @@
 ?>
 
 	<script>
+var shouldSwitch = true;
 function sortTable(n, level) {
     var table,
     rows,
@@ -27,7 +28,6 @@ function sortTable(n, level) {
     i,
     x,
     y,
-    shouldSwitch,
     dir,
     switchcount = 0;
     table = document.getElementById("myTable");
@@ -60,7 +60,12 @@ function sortTable(n, level) {
 
     // Sort the array based on the second element
     items.sort(function (first, second) {
-        return second[1] - first[1];
+		if(shouldSwitch == true){
+			return second[1] - first[1];
+		}
+		else{
+			return first[1] - second[1];
+		}
     });
 
     dict = items;
@@ -78,6 +83,9 @@ function sortTable(n, level) {
     for (i = myRows.length - 1; i >= 0; i--) {
         table.rows[0].parentNode.insertBefore(myRows[dict_c_to_r[dict[i][0]] - 1], table.rows[1]);
     }
+	shouldSwitch = !shouldSwitch;
+	
+
 }
 </script>
 <nav class="navbar navbar-expand-sm bg-light navbar-light justify-content-center" >
