@@ -38,6 +38,12 @@ class JdsChar:
 
     def set_count(self, count):
         self.__count = count
+
+    def count(self):
+        return self.__count
+
+    def count_round(self):
+        count = self.__count
         if count > 10000:
             count = int(int(round(count / 10000)) * 10000)
         if count > 1000:
@@ -47,9 +53,4 @@ class JdsChar:
         elif count > 10:
             count = int(int(round(count / 10)) * 10)
         self.__count_round = count
-
-    def count(self):
-        return self.__count
-
-    def count_round(self):
         return self.__count_round

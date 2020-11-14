@@ -30,12 +30,10 @@ class JdsCharHandler:
                 jds_char.drama_uid = drama.uid
                 try:
                     # increment count for this drama
-                    if jds_char in chars:
-                        chars[jds_char] = chars[jds_char] + 1
-                    else:
-                        chars[jds_char] = 1
-                    jds_char.add_line_ref(jds_line.uid)
-
+                    if jds_char not in chars:
+                        chars[jds_char] = jds_char
+                    chars[jds_char].set_count(chars[jds_char].count() + 1)
+                    chars[jds_char].add_line_ref(jds_line.uid)
                 except Exception as e:
                     exception(e)
         if "\n" in chars:
@@ -51,13 +49,14 @@ class JdsCharHandler:
         #    chars = self.read_chars_worker(drama)
         #    self.db.push_chars(chars)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             futures = {}
             for drama in dramas:
                 futures[drama] = executor.submit(self.read_chars_worker, drama)
             for future in concurrent.futures.as_completed(futures.values()):
                 chars = future.result()
                 self.db.push_chars_count(chars)
+                self.db.push_chars_to_line(chars)
         self.db.push_chars()
 
 

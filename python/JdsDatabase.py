@@ -221,12 +221,30 @@ class JdsDatabase:
         sql = "INSERT INTO drama (drama_uid, name) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
 
+    def push_chars_to_line(self, chars):
+        if len(chars) is 0:
+            return
+        sql_inserts = []
+        char: JdsChar
+        for char in chars.keys():
+            count = 0
+            for line_uid in char.lines:
+                sql_insert = "({},{})".format(char.uid, line_uid)
+                sql_inserts.append(sql_insert)
+                count += 1
+                if count == 10:
+                    break
+
+        sql = "INSERT INTO kanji_to_line (kanji_uid, line_uid) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+        sql_inserts.clear()
+
     def push_chars_count(self, chars):
         if len(chars) is 0:
             return
         sql_inserts = []
-        for char, count in chars.items():
-            sql_insert = "({},{},{})".format(char.uid, char.drama_uid, count)
+        for char_uid, char in chars.items():
+            sql_insert = "({},{},{})".format(char.uid, char.drama_uid, char.count())
             sql_inserts.append(sql_insert)
 
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
@@ -358,7 +376,7 @@ class JdsDatabase:
         sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_to_line (kanji_uid INT UNSIGNED, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
+        sql = "CREATE TABLE kanji_to_line (kanji_uid INT UNSIGNED, line_uid INT UNSIGNED , INDEX(kanji_uid), INDEX(line_uid))"
         self.__cursor.execute(sql)
 
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"

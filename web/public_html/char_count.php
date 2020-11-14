@@ -185,6 +185,14 @@ function displayLines()
 	ON a.line_uid=b.line_uid
 	WHERE (b.kanji_uid = ".$selectedWord.")
 	";
+	if($selectedDrama != 0){
+		$query = $query."AND (a.drama_uid = ".$selectedDrama.")";
+	}
+	else{
+		$query = $query."LIMIT 10";
+	}
+	
+	
 	$result = mysqli_query($con,$query);
 	
 	
