@@ -26,9 +26,10 @@ class JdsChar:
         self.jlpt = 0
         self.jouyou = 0
         self.jdpt = 0
-        self.jlpt_pos = -1
-        self.jouyou_pos = -1
-        self.jdpt_pos = -1
+        self.jlpt_pos = 0
+        self.jouyou_pos = 0
+        self.jdpt_pos = 0
+        self.flag = 0
         self.__count = 0
         self.__count_round = None
 

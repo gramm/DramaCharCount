@@ -1,5 +1,6 @@
 import concurrent.futures
 import csv
+import re
 import sys
 from operator import attrgetter, methodcaller
 
@@ -83,7 +84,7 @@ class JdsInfoHandler:
         # set jlpt position
         jlptDict = self.compute_pos_dict('jlpt')
         position = 1
-        for level in range(len(jlptDict) - 1, -1, -1):
+        for level in range(len(jlptDict) - 1, 0, -1):
             for char in jlptDict[level]:
                 char.jlpt_pos = position
                 position += 1
@@ -91,12 +92,23 @@ class JdsInfoHandler:
         # set jdpt position
         jouyouDict = self.compute_pos_dict('jouyou')
         position = 1
-        for level in range(len(jouyouDict) - 1, -1, -1):
+        for level in range(len(jouyouDict) - 1, 0, -1):
             for char in jouyouDict[level]:
                 char.jouyou_pos = position
                 position += 1
 
         self.db.push_kanji_pos(self.chars)
+
+    def update_kanji_flags(self):
+        for char in self.chars.values():
+            flag = 0
+            if is_kanji(char.value):
+                char.flag = 1
+            elif re.match("[ぁ-んァ-ン]", char.value):
+                char.flag = 2
+            else:
+                char.flag = 3
+        self.db.push_kanji_info_flags(self.chars)
 
 
 if __name__ == "__main__":
@@ -109,6 +121,8 @@ if __name__ == "__main__":
     jds_info_handler.update_jlpt_joyo()
 
     jds_info_handler.update_kanji_pos()
+
+    jds_info_handler.update_kanji_flags()
     # jds_info_handler.write_kanji_distance()
 
     print("{} ended".format(__file__))

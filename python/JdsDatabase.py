@@ -270,22 +270,13 @@ class JdsDatabase:
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
 
-    def push_kanji_info(self, chars):
-
+    def push_kanji_info_flags(self, chars):
         sql_inserts = []
-        char: JdsChar
-        for char_uid, char in chars.items():
-
-            flag = 0
-            if is_kanji(char.value):
-                flag = 1
-            elif re.match("[ぁ-んァ-ン]", char.value):
-                flag = 2
-            else:
-                flag = 3
-            sql_insert = "({},{},{},{},{},{},{})".format(char_uid, char.jlpt, char.jouyou(), char.jdpt, char.dist_jdpt_to_jlpt, char.dist_jlpt_to_jdpt, flag)
+        for char in chars.values():
+            sql_insert = "({},{})".format(char.uid, char.flag)
             sql_inserts.append(sql_insert)
-        sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt, flag) VALUES {}".format(",".join(sql_inserts))
+        sql = "INSERT INTO kanji_info (kanji_uid, flag) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), flag=VALUES(flag)".format(",".join(sql_inserts))
+        print(sql)
         self.__cursor_execute_thread_safe(sql)
 
     def push_kanji_jlpt_joyo(self, chars):
@@ -293,7 +284,6 @@ class JdsDatabase:
         for char in chars.values():
             sql_insert = "({},{},{})".format(char.uid, char.jlpt, char.jouyou)
             sql_inserts.append(sql_insert)
-
         sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt=VALUES(jlpt), jouyou=VALUES(jouyou)".format(",".join(sql_inserts))
         print(sql)
         self.__cursor_execute_thread_safe(sql)

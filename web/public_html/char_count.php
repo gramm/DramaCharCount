@@ -16,6 +16,7 @@ $wordTable = "hello";
 <?php
 include('header.php');	
 ?>
+
 <?php
 
 init();
@@ -230,7 +231,7 @@ function displayWordTable()
 	GLOBAL $filteredUserKanji;
 	GLOBAL $wordTable;
 	
-	if(is_null($selectedDrama))
+	if($selectedDrama == -1)
 	{
 		echo "No drama selected";
 		return;
@@ -282,7 +283,6 @@ function displayWordTable()
 	ORDER BY `b`.`count` DESC
 	LIMIT 100
 	");
-		
 	
 	
 	//do word table
@@ -353,15 +353,15 @@ function parseGetInfo()
 	GLOBAL $filteredUserKanji;
 	
 	// find selected drama
-	if((empty($_GET["drama"])) || ($_GET["drama"]=="NoSelection"))
+	if((isset($_GET["drama"]) == false) || ($_GET["drama"]=="NoSelection"))
 	{
-		$selectedDrama=null;
+		$selectedDrama=-1;
 		$selectedDramaName= "Select drama...";
 	}
 	else
 	{
 		$selectedDrama=$_GET["drama"];
-		$selectedDramaName= $allDrama[$selectedDrama - 1][0]; // - 1 because drama index starts at 1
+		$selectedDramaName= $allDrama[$selectedDrama][0]; // - 1 because drama index starts at 1
 	}
 	
 	// find selected word
@@ -418,5 +418,9 @@ $(document).ready(function(){
   $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
+
+<?php
+include('footer.php');	
+?>
 
 </html>
