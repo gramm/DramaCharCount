@@ -289,13 +289,22 @@ class JdsDatabase:
         self.__cursor_execute_thread_safe(sql)
 
     def push_kanji_jlpt_joyo(self, chars):
-        # prepare info table
         sql_inserts = []
         for char in chars.values():
             sql_insert = "({},{},{})".format(char.uid, char.jlpt, char.jouyou)
             sql_inserts.append(sql_insert)
 
         sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt=VALUES(jlpt), jouyou=VALUES(jouyou)".format(",".join(sql_inserts))
+        print(sql)
+        self.__cursor_execute_thread_safe(sql)
+
+    def push_kanji_pos(self, chars):
+        sql_inserts = []
+        for char in chars.values():
+            sql_insert = "({},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos)".format(",".join(sql_inserts))
         print(sql)
         self.__cursor_execute_thread_safe(sql)
 
@@ -343,9 +352,6 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS kanji"
         self.__cursor.execute(sql)
 
-        sql = "DROP TABLE IF EXISTS kanji_info"
-        self.__cursor.execute(sql)
-
         sql = "DROP TABLE IF EXISTS kanji_flag"
         self.__cursor.execute(sql)
 
@@ -359,9 +365,6 @@ class JdsDatabase:
         sql = "CREATE TABLE kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value VARCHAR(1))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
-        self.__cursor.execute(sql)
-
         sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
         self.__cursor.execute(sql)
 
@@ -371,6 +374,8 @@ class JdsDatabase:
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
         self.__cursor.execute(sql)
 
+        self.reset_info()
+
     def reset_info(self):
         sql = "DROP TABLE IF EXISTS kanji_info"
         self.__cursor.execute(sql)
@@ -378,8 +383,8 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS word_info"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)

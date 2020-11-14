@@ -1,8 +1,9 @@
 import concurrent.futures
 import csv
 import sys
+from operator import attrgetter, methodcaller
 
-from python.DccUtils import parse_args, exception
+from python.DccUtils import parse_args, exception, is_kanji
 from python.classes.JdsChar import JdsChar
 from python.JdsDatabase import JdsDatabase
 
@@ -30,7 +31,7 @@ class JdsInfoHandler:
                     new_char = JdsChar(chr(uid))
                     self.chars[uid] = new_char
                     self.db.push_char(new_char)
-                self.chars[uid].set_jlpt(jlpt)
+                self.chars[uid].jlpt = jlpt
                 # update count of kanji per level
                 if jlpt not in jdpt_count:
                     jdpt_count[jlpt] = 0
@@ -48,6 +49,55 @@ class JdsInfoHandler:
 
         self.db.push_kanji_jlpt_joyo(self.chars)
 
+    def compute_pos_dict(self, jlpt_or_jouyou):
+        # sort chars by jlpt then by count
+        myDict = dict()
+
+        for char in self.chars.values():
+            if jlpt_or_jouyou is 'jlpt':
+                if char.jlpt not in myDict:
+                    myDict[char.jlpt] = []
+                myDict[char.jlpt].append(char)
+            else:
+                if char.jouyou not in myDict:
+                    myDict[char.jouyou] = []
+                myDict[char.jouyou].append(char)
+
+        for level in myDict:
+            myDict[level].sort(key=methodcaller('count'), reverse=True)
+        return myDict
+
+    def update_kanji_pos(self):
+
+        # get all char count and sort by count
+        self.total_count = self.db.get_count_for_drama(JdsDatabase.get_merged_drama())
+
+        # set jdpt position
+        position = 1
+        for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
+            if is_kanji(self.chars[char_uid].value):
+                self.chars[char_uid].jdpt_pos = position
+                self.chars[char_uid].set_count(self.total_count[char_uid])
+                position += 1
+
+        # set jlpt position
+        jlptDict = self.compute_pos_dict('jlpt')
+        position = 1
+        for level in range(len(jlptDict) - 1, -1, -1):
+            for char in jlptDict[level]:
+                char.jlpt_pos = position
+                position += 1
+
+        # set jdpt position
+        jouyouDict = self.compute_pos_dict('jouyou')
+        position = 1
+        for level in range(len(jouyouDict) - 1, -1, -1):
+            for char in jouyouDict[level]:
+                char.jouyou_pos = position
+                position += 1
+
+        self.db.push_kanji_pos(self.chars)
+
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
@@ -57,6 +107,8 @@ if __name__ == "__main__":
     jds_info_handler.reset()
 
     jds_info_handler.update_jlpt_joyo()
+
+    jds_info_handler.update_kanji_pos()
     # jds_info_handler.write_kanji_distance()
 
     print("{} ended".format(__file__))

@@ -26,25 +26,17 @@ class JdsChar:
         self.jlpt = 0
         self.jouyou = 0
         self.jdpt = 0
-        self.dist_jdpt_to_jlpt = None
-        self.dist_jlpt_to_jdpt = None
-        self.count = None
-        self.count_round = None
+        self.jlpt_pos = -1
+        self.jouyou_pos = -1
+        self.jdpt_pos = -1
+        self.__count = 0
+        self.__count_round = None
 
     def add_line_ref(self, line_uid):
         self.lines.add(line_uid)
 
-    def set_jlpt(self, level):
-        self.jlpt = level
-
-    def jouyou(self, level):
-        self.jouyou = level
-
-    def set_jdpt(self, level):
-        self.jdpt = level
-
     def set_count(self, count):
-        self.count = count
+        self.__count = count
         if count > 10000:
             count = int(int(round(count / 10000)) * 10000)
         if count > 1000:
@@ -53,4 +45,10 @@ class JdsChar:
             count = int(int(round(count / 100)) * 100)
         elif count > 10:
             count = int(int(round(count / 10)) * 10)
-        self.count_round = count
+        self.__count_round = count
+
+    def count(self):
+        return self.__count
+
+    def count_round(self):
+        return self.__count_round
