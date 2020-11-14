@@ -38,17 +38,18 @@ function sortTable(n, level) {
     for (i = 1; i < rows.length; i++) {
 
         c = rows[i].getElementsByTagName("TD")[0].innerHTML;
-        x = rows[i].getElementsByTagName("TD")[n].innerHTML.toLowerCase();
+        x = rows[i].getElementsByTagName("TD")[n].innerHTML;//.toLowerCase();
         var ix = parseInt(x);
         if (isNaN(ix) == false) {
             x = ix;
         }
-        if (x == "same level") {
-            x = 0;
+        if (x == "Not in Jōyō") {
+            x = 32767;
         }
-        if (x == "not in jlpt") {
-            x = level;
+        if (x == "Not in JLPT") {
+            x = 32767;
         }
+
 
         dict[c] = x;
         dict_c_to_r[c] = i;

@@ -54,3 +54,9 @@ class JdsChar:
             count = int(int(round(count / 10)) * 10)
         self.__count_round = count
         return self.__count_round
+
+    def jdpt_to_jlpt(self):
+        if self.jlpt is 0:
+            return -32768
+        else:
+            return self.jlpt_pos - self.jdpt_pos

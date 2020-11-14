@@ -309,10 +309,10 @@ class JdsDatabase:
     def push_kanji_pos(self, chars):
         sql_inserts = []
         for char in chars.values():
-            sql_insert = "({},{},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos, char.jdpt)
+            sql_insert = "({},{},{},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos, char.jdpt, char.jdpt_to_jlpt())
             sql_inserts.append(sql_insert)
 
-        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos, jdpt) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos), jdpt=VALUES(jdpt)".format(",".join(sql_inserts))
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos, jdpt, jdpt_to_jlpt) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos), jdpt=VALUES(jdpt), jdpt_to_jlpt=VALUES(jdpt_to_jlpt)".format(",".join(sql_inserts))
         print(sql)
         self.__cursor_execute_thread_safe(sql)
 
@@ -391,7 +391,7 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS word_info"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
 
         sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
