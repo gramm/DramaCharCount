@@ -1,12 +1,14 @@
+import re
+from collections import Set
 from threading import Lock
 
 import mysql
 from mysql.connector import Error
 
-from python.DccUtils import exception
-from python.JdsChar import JdsChar
-from python.JdsDrama import JdsDrama
-from python.JdsLine import JdsLine
+from python.DccUtils import exception, is_kanji
+from python.classes.JdsChar import JdsChar
+from python.classes.JdsDrama import JdsDrama
+from python.classes.JdsLine import JdsLine
 
 
 class JdsDatabase:
@@ -17,6 +19,10 @@ class JdsDatabase:
     def __init__(self):
         self.max_allowed_packets = 1048576  # fixme: get from SQL (SHOW VARIABLES LIKE 'max_allowed_packet')
         pass
+
+    @staticmethod
+    def get_merged_drama():
+        return JdsDrama(0, "--> All Dramas Together <--")
 
     @staticmethod
     def __check_state():
@@ -65,26 +71,119 @@ class JdsDatabase:
 
         if JdsDatabase.__db.is_connected():
             print("Database connection successful")
+
             JdsDatabase.__cursor = JdsDatabase.__db.cursor(dictionary=True)
+
+            JdsDatabase.__cursor.execute('SET NAMES utf8mb4')
+            JdsDatabase.__cursor.execute("SET CHARACTER SET utf8mb4")
+            JdsDatabase.__cursor.execute("SET character_set_connection=utf8mb4")
+            JdsDatabase.__db.commit()
             return True
         else:
             print("Could not connect to database")
             return False
 
-    def cursor_execute_thread_safe(self, sql):
+    def __cursor_execute_thread_safe(self, sql):
+        print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             self.__db.commit()
 
-    def cursor_execute_fetchone_thread_safe(self, sql):
+    def __cursor_execute_fetchone_thread_safe(self, sql):
+        print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchone()
 
-    def cursor_execute_fetchall_thread_safe(self, sql):
+    def __cursor_execute_fetchall_thread_safe(self, sql):
+        print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
+
+    def get_drama(self, name_or_uid):
+        if not JdsDatabase.__check_state():
+            return
+        if type(name_or_uid) is 'int':
+            sql = "SELECT * FROM drama WHERE drama_uid='{}'".format(name_or_uid)
+            result = self.__cursor_execute_fetchone_thread_safe(sql)
+        else:
+            sql = "SELECT * FROM drama WHERE name='{}'".format(JdsDatabase.__escape_sql(name_or_uid))
+            result = self.__cursor_execute_fetchone_thread_safe(sql)
+
+        if result:
+            return JdsDrama(result['drama_uid'], result['name'])
+        else:
+            return None
+
+    def get_all_dramas(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM drama"
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        dramas = []
+        for result in results:
+            dramas.append(JdsDrama(result['drama_uid'], result['name']))
+        return dramas
+
+    def get_lines_for_drama(self, drama):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM line WHERE drama_uid={}".format(drama.uid)
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        lines = []
+        try:
+            for result in results:
+                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value'].decode("utf-8")))
+        except Exception as e:
+            exception(e)
+        return lines
+
+    def get_all_chars(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM kanji "
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        chars = {}
+        try:
+            for result in results:
+                chars[result['kanji_uid']] = JdsChar(chr(result['kanji_uid']))
+        except Exception as e:
+            exception(e)
+        return chars
+
+    def get_count_for_drama(self, drama):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM count WHERE drama_uid={} ".format(drama.uid)
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        res = {}
+        try:
+            for result in results:
+                res[result['kanji_uid']] = result['count']
+        except Exception as e:
+            exception(e)
+        return res
+
+    #    def push_kanji_info(self, kanjis):
+    #        if not self.__check_state():
+    #            return
+    #
+    #        sql_inserts = []
+    #
+    #        for kanji in kanjis:
+    #            cur_distance_jdtp_to_jlpt = distance_jdtp_to_jlpt[kanji_uid] if kanji_uid in distance_jdtp_to_jlpt else 99
+    #            cur_distance_jltp_to_jdpt = distance_jltp_to_jdpt[kanji_uid] if kanji_uid in distance_jltp_to_jdpt else 99
+    #
+    #            flag = 0
+    #            if is_kanji(value):
+    #                flag = 1
+    #            elif re.match("[ぁ-んァ-ン]", value):
+    #                flag = 2
+    #            else:
+    #                flag = 3
+    #            sql_insert = "({},{},{},{},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, cur_distance_jdtp_to_jlpt, cur_distance_jltp_to_jdpt, flag)
+    #            sql_inserts.append(sql_insert)
 
     def push_lines(self, lines):
         if not self.__check_state():
@@ -99,7 +198,7 @@ class JdsDatabase:
             # push if we will reach max_allowed_packets
             if (packet_size + len(sql_insert)) > self.max_allowed_packets:
                 sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
-                self.cursor_execute_thread_safe(sql)
+                self.__cursor_execute_thread_safe(sql)
                 sql_inserts.clear()
                 packet_size = 0
 
@@ -109,7 +208,7 @@ class JdsDatabase:
         # push the remaining part
         if len(sql_inserts) > 0:
             sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
-            self.cursor_execute_thread_safe(sql)
+            self.__cursor_execute_thread_safe(sql)
 
     def push_dramas(self, dramas):
         if not self.__check_state():
@@ -120,45 +219,95 @@ class JdsDatabase:
             sql_insert = "({},'{}')".format(drama.uid, drama_value)
             sql_inserts.append(sql_insert)
         sql = "INSERT INTO drama (drama_uid, name) VALUES {}".format(",".join(sql_inserts))
-        self.cursor_execute_thread_safe(sql)
+        self.__cursor_execute_thread_safe(sql)
 
-    def get_drama(self, name_or_uid):
-        if not JdsDatabase.__check_state():
+    def push_chars_count(self, chars):
+        if len(chars) is 0:
             return
-        if type(name_or_uid) is 'int':
-            sql = "SELECT * FROM drama WHERE drama_uid='{}'".format(name_or_uid)
-            result = self.cursor_execute_fetchone_thread_safe(sql)
-        else:
-            sql = "SELECT * FROM drama WHERE name='{}'".format(JdsDatabase.__escape_sql(name_or_uid))
-            result = self.cursor_execute_fetchone_thread_safe(sql)
+        sql_inserts = []
+        for char, count in chars.items():
+            sql_insert = "({},{},{})".format(char.uid, char.drama_uid, count)
+            sql_inserts.append(sql_insert)
 
-        if result:
-            return JdsDrama(result['drama_uid'], result['name'])
-        else:
-            return None
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+        sql_inserts.clear()
 
-    def get_all_dramas(self):
-        if not JdsDatabase.__check_state():
-            return
-        sql = "SELECT * FROM drama"
-        results = self.cursor_execute_fetchall_thread_safe(sql)
-        dramas = []
+    def push_char(self, char):
+        # push kanji
+        sql = "INSERT INTO kanji (kanji_uid, value) VALUES ({},'{}')".format(char.uid, self.__escape_sql(char.value))
+        self.__cursor_execute_thread_safe(sql)
+
+    def push_chars(self):
+        sql = "SELECT * FROM count"
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+
+        # sum everything
+        chars = {}
+        counts = {}
         for result in results:
-            dramas.append(JdsDrama(result['drama_uid'], result['name']))
-        return dramas
+            kanji_uid = result["kanji_uid"]
+            count = result["count"]
+            if kanji_uid not in chars:
+                chars[kanji_uid] = JdsChar(chr(kanji_uid))
+                counts[kanji_uid] = 0
+            counts[kanji_uid] += count
 
-    def get_lines_for_drama(self, drama):
-        if not JdsDatabase.__check_state():
-            return
-        sql = "SELECT * FROM line WHERE drama_uid={}".format(drama.uid)
-        results = self.cursor_execute_fetchall_thread_safe(sql)
-        lines = []
-        try:
-            for result in results:
-                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value'].decode("utf-8")))
-        except Exception as e:
-            exception(e)
-        return lines
+        # push kanji
+        sql_inserts = []
+        for char in chars.values():
+            sql_insert = "({},'{}')".format(char.uid, self.__escape_sql(char.value))
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+
+        # push total count
+        sql_inserts = []
+        for uid, count in counts.items():
+            sql_insert = "({},{},{})".format(uid, 0, count)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+
+    def push_kanji_info(self, chars):
+
+        sql_inserts = []
+        char: JdsChar
+        for char_uid, char in chars.items():
+
+            flag = 0
+            if is_kanji(char.value):
+                flag = 1
+            elif re.match("[ぁ-んァ-ン]", char.value):
+                flag = 2
+            else:
+                flag = 3
+            sql_insert = "({},{},{},{},{},{},{})".format(char_uid, char.jlpt, char.jouyou(), char.jdpt, char.dist_jdpt_to_jlpt, char.dist_jlpt_to_jdpt, flag)
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt, flag) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+
+    def push_kanji_jlpt_joyo(self, chars):
+        # prepare info table
+        sql_inserts = []
+        for char in chars.values():
+            sql_insert = "({},{},{})".format(char.uid, char.jlpt, char.jouyou)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt, jouyou) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt=VALUES(jlpt), jouyou=VALUES(jouyou)".format(",".join(sql_inserts))
+        print(sql)
+        self.__cursor_execute_thread_safe(sql)
+
+    def prepare_info(self, chars):
+        # prepare info table
+        sql_inserts = []
+        for char in chars.values():
+            sql_insert = "({})".format(char.uid)
+            sql_inserts.append(sql_insert)
+
+        sql = "INSERT INTO kanji_info (kanji_uid) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
 
     def reset_lines(self):
         if not self.__check_state():
@@ -207,61 +356,30 @@ class JdsDatabase:
         sql = "CREATE TABLE count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value NCHAR(1))"
+        sql = "CREATE TABLE kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value VARCHAR(1))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid SMALLINT PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
         self.__cursor.execute(sql)
 
         sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_to_line (kanji_uid SMALLINT, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
+        sql = "CREATE TABLE kanji_to_line (kanji_uid INT UNSIGNED, line_uid SMALLINT , INDEX(kanji_uid), INDEX(line_uid))"
         self.__cursor.execute(sql)
 
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
         self.__cursor.execute(sql)
 
-    def push_chars_count(self, chars):
-        if len(chars) is 0:
-            return
-        sql_inserts = []
-        for char, count in chars.items():
-            sql_insert = "({},{},{})".format(char.uid, char.drama_uid, count)
-            sql_inserts.append(sql_insert)
+    def reset_info(self):
+        sql = "DROP TABLE IF EXISTS kanji_info"
+        self.__cursor.execute(sql)
 
-        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
-        self.cursor_execute_thread_safe(sql)
-        sql_inserts.clear()
+        sql = "DROP TABLE IF EXISTS word_info"
+        self.__cursor.execute(sql)
 
-    def push_chars(self):
-        sql = "SELECT * FROM count"
-        results = self.cursor_execute_fetchall_thread_safe(sql)
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        self.__cursor.execute(sql)
 
-        # sum everything
-        chars = {}
-        counts = {}
-        for result in results:
-            kanji_uid = result["kanji_uid"]
-            count = result["count"]
-            if kanji_uid not in chars:
-                chars[kanji_uid] = JdsChar(chr(kanji_uid))
-                counts[kanji_uid] = 0
-            counts[kanji_uid] += count
-
-        # push kanji
-        sql_inserts = []
-        for char in chars.values():
-            sql_insert = "({},'{}')".format(char.uid, self.__escape_sql(char.value))
-            sql_inserts.append(sql_insert)
-        sql = "INSERT INTO kanji (kanji_uid, value) VALUES {}".format(",".join(sql_inserts))
-        self.cursor_execute_thread_safe(sql)
-
-        # push total count
-        sql_inserts = []
-        for uid, count in counts.items():
-            sql_insert = "({},{},{})".format(uid, 0, count)
-            sql_inserts.append(sql_insert)
-
-        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
-        self.cursor_execute_thread_safe(sql)
+        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, dist_to_jlpt TINYINT, dist_to_jdpt TINYINT, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, dist_to_jlpt, dist_to_jdpt,    flag))"
+        self.__cursor.execute(sql)

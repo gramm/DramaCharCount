@@ -4,10 +4,14 @@ import sys
 from python import DccUtils
 from python.DccUtils import parse_args
 from python.JdsDatabase import JdsDatabase
-from python.JdsDrama import JdsDrama
+from python.classes.JdsDrama import JdsDrama
 
 
 class JdsDramaHandler:
+    '''
+    Find all the drama in the given folder (i.e. top level subfolders), assign a uid and push then to the database
+    '''
+
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
@@ -17,7 +21,7 @@ class JdsDramaHandler:
 
     def read_dramas(self):
         subfolders = DccUtils.get_subfolders(self.args["path"])
-        dramas = [JdsDrama(0, "--> All Dramas Together <--")]
+        dramas = [self.db.get_merged_drama()]
         for subfolder in subfolders:
             dramas.append(JdsDrama(len(dramas), os.path.basename(subfolder)))
         self.db.push_dramas(dramas)

@@ -17,6 +17,10 @@ def get_files(path):
     return retlist
 
 
+def is_kanji(c):
+    return re.match("[一-龯]", c)
+
+
 def exception(e):
     if hasattr(e, 'message'):
         print(e.message)

@@ -4,10 +4,15 @@ import sys
 from python import DccUtils
 from python.DccUtils import parse_args
 from python.JdsDatabase import JdsDatabase
-from python.JdsLine import JdsLine
+from python.classes.JdsLine import JdsLine
 
 
 class JdsLineHandler:
+    '''
+    Read all lines in the provided folder, assign them a unique uid and push the result in the database
+    The drama must have been loaded to the database before (via JdsDramaHandler)
+    '''
+
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()

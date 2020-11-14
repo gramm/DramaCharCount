@@ -2,7 +2,7 @@ import concurrent.futures
 import sys
 
 from python.DccUtils import parse_args, exception
-from python.JdsChar import JdsChar
+from python.classes.JdsChar import JdsChar
 from python.JdsDatabase import JdsDatabase
 
 
@@ -15,6 +15,12 @@ class JdsCharHandler:
         return self.db.reset_chars()
 
     def read_chars_worker(self, drama):
+        '''
+        threaded worker that counts all characters for a given drama, by getting all lines from the DB and counting the char.
+        requires drama,lines to be in the DB beforehand
+        :param drama:
+        :return:
+        '''
         print("start read_chars_worker for {}".format(drama.value))
         chars = {}  # key = char, value = count
         jds_lines = self.db.get_lines_for_drama(drama)

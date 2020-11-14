@@ -278,7 +278,6 @@ function displayWordTable()
 	AND c.jouyou NOT IN (".$sqlFilteredJouyouKanjiLevel.")
 	AND c.flag IN (1)
 	AND a.value NOT IN (".$sqlFilteredUserKanji.")
-	
 	WHERE b.drama_uid = ".$selectedDrama."  
 	ORDER BY `b`.`count` DESC
 	LIMIT 100
