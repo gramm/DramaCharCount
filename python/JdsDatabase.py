@@ -309,10 +309,10 @@ class JdsDatabase:
     def push_kanji_pos(self, chars):
         sql_inserts = []
         for char in chars.values():
-            sql_insert = "({},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos)
+            sql_insert = "({},{},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos, char.jdpt)
             sql_inserts.append(sql_insert)
 
-        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos)".format(",".join(sql_inserts))
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos, jdpt) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos), jdpt=VALUES(jdpt)".format(",".join(sql_inserts))
         print(sql)
         self.__cursor_execute_thread_safe(sql)
 

@@ -73,14 +73,6 @@ class JdsInfoHandler:
         # get all char count and sort by count
         self.total_count = self.db.get_count_for_drama(JdsDatabase.get_merged_drama())
 
-        # set jdpt position
-        position = 1
-        for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
-            if is_kanji(self.chars[char_uid].value):
-                self.chars[char_uid].jdpt_pos = position
-                self.chars[char_uid].set_count(self.total_count[char_uid])
-                position += 1
-
         # set jlpt position
         jlptDict = self.compute_pos_dict('jlpt')
         position = 1
@@ -89,13 +81,34 @@ class JdsInfoHandler:
                 char.jlpt_pos = position
                 position += 1
 
-        # set jdpt position
+        # set jouyou position
         jouyouDict = self.compute_pos_dict('jouyou')
         position = 1
         for level in range(len(jouyouDict) - 1, 0, -1):
             for char in jouyouDict[level]:
                 char.jouyou_pos = position
                 position += 1
+
+        # set jdpt position
+        char_per_level = {}
+        for level in range(len(jlptDict) - 1, 0, -1):
+            char_per_level[level] = len(jlptDict[level])
+
+        position = 1
+        cur_level = 5
+        cur_count = 0
+        for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
+            if is_kanji(self.chars[char_uid].value):
+                self.chars[char_uid].jdpt_pos = position
+                self.chars[char_uid].set_count(self.total_count[char_uid])
+                position += 1
+
+                if cur_level > 0:
+                    self.chars[char_uid].jdpt = cur_level
+                    cur_count += 1
+                    if cur_count == char_per_level[cur_level]:
+                        cur_count = 0
+                        cur_level -= 1
 
         self.db.push_kanji_pos(self.chars)
 
