@@ -15,15 +15,15 @@ function drawJdptTable($con, $level)
 	
 	echo "<table class='table table-bordered table-striped table-sm' id='myTable'>
 		<tr>
-			<th onclick='sortTable(0, ".$level.")'>Word</th>
-			<th onclick='sortTable(1, ".$level.")'>Count</th>
-			<th onclick='sortTable(2, ".$level.")'>Jlpt</th>
-			<th onclick='sortTable(3, ".$level.")'>Jōyō </th>
-			<th onclick='sortTable(4, ".$level.")'>Jdpt </th>
-			<th onclick='sortTable(5, ".$level.")'>Jlpt pos</th>
-			<th onclick='sortTable(6, ".$level.")'>Jōyō pos</th>
-			<th onclick='sortTable(7, ".$level.")'>Jdpt pos</th>
-			<th onclick='sortTable(8, ".$level.")'>Diff Jdpt to Jlpt</th>
+			<th onclick='sortTable(0, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='The actual kanji'>Word</div></th>
+			<th onclick='sortTable(1, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Number of occurences in all dramas'>Count</div></th>
+			<th onclick='sortTable(2, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JLPT level'>Jlpt</div></th>
+			<th onclick='sortTable(3, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Jōyō level'>Jōyō</div></th>
+			<th onclick='sortTable(4, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JDPT level'>Jdpt</div></th>
+			<th onclick='sortTable(5, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JLPT position (sorted by level then by count between all dramas)'>Jlpt pos</div></th>
+			<th onclick='sortTable(6, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Jōyō position (sorted by level then by count between all dramas)'>Jōyō pos</div></th>
+			<th onclick='sortTable(7, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JSPT position (sorted by count between all dramas)'>Jdpt pos</div></th>
+			<th onclick='sortTable(8, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Position difference between the JLPT and JDPT position. For example, 1500 means that the JLPT position is positioned 1500 kanji later than in the JDPT.'>Diff Jdpt to Jlpt</div></th>
 		</tr>";
 
 		$wordTable = "";

@@ -84,19 +84,19 @@ class JdsDatabase:
             return False
 
     def __cursor_execute_thread_safe(self, sql):
-        print(sql)
+        # print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             self.__db.commit()
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
-        print(sql)
+        # print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchone()
 
     def __cursor_execute_fetchall_thread_safe(self, sql):
-        print(sql)
+        # print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
@@ -123,7 +123,10 @@ class JdsDatabase:
         results = self.__cursor_execute_fetchall_thread_safe(sql)
         dramas = []
         for result in results:
-            dramas.append(JdsDrama(result['drama_uid'], result['name']))
+            drama = JdsDrama(result['drama_uid'], result['name'])
+            drama.word_ok = result['word_ok']
+            drama.kanji_ok = result['kanji_ok']
+            dramas.append(drama)
         return dramas
 
     def get_lines_for_drama(self, drama):
@@ -134,7 +137,7 @@ class JdsDatabase:
         lines = []
         try:
             for result in results:
-                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value'].decode("utf-8")))
+                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value']))
         except Exception as e:
             exception(e)
         return lines
@@ -196,7 +199,7 @@ class JdsDatabase:
             sql_insert = "({},{},'{}')".format(line.uid, line.drama_uid, line_value)
 
             # push if we will reach max_allowed_packets
-            if (packet_size + len(sql_insert)) > self.max_allowed_packets:
+            if (packet_size + len(sql_insert)) >= self.max_allowed_packets / 2:
                 sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
                 self.__cursor_execute_thread_safe(sql)
                 sql_inserts.clear()
@@ -250,6 +253,18 @@ class JdsDatabase:
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
+
+    def push_kanji_ok(self, chars):
+
+        if len(chars) is 0:
+            return
+        char = None
+        for char_uid, mychar in chars.items():
+            char = mychar
+            break;
+
+        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(char.drama_uid, True)
+        self.__cursor_execute_thread_safe(sql)
 
     def push_char(self, char):
         # push kanji
@@ -346,7 +361,7 @@ class JdsDatabase:
         self.__cursor.execute(sql)
 
         print("Creating table 'drama'")
-        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), INDEX(drama_uid))"
+        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), kanji_ok TINYINT,word_ok TINYINT, INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
     def reset_chars(self):

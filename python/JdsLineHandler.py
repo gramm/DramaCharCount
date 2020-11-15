@@ -2,7 +2,7 @@ import os
 import sys
 
 from python import DccUtils
-from python.DccUtils import parse_args
+from python.DccUtils import parse_args, exception
 from python.JdsDatabase import JdsDatabase
 from python.classes.JdsLine import JdsLine
 
@@ -25,12 +25,21 @@ class JdsLineHandler:
         line_id = 0
         lines = []
         for subfolder in subfolders:
-            drama = JdsDatabase.get_drama(os.path.basename(subfolder))
+            drama = self.db.get_drama(os.path.basename(subfolder))
+
+            print("read_lines for drama {}".format(drama.uid))
             for filepath in DccUtils.get_files(subfolder):
                 with open(filepath, encoding='utf-8') as file:
-                    for line in file.readlines():
-                        lines.append(JdsLine(uid=line_id, drama_uid=drama.uid, value=line))
-                        line_id += 1
+                    try:
+                        for line in file.readlines():
+                            try:
+                                lines.append(JdsLine(uid=line_id, drama_uid=drama.uid, value=line))
+                                line_id += 1
+                            except Exception as e:
+                                exception(e)
+                    except Exception as e:
+                        exception(e)
+
             self.db.push_lines(lines)
             lines.clear()
 

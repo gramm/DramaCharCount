@@ -136,6 +136,5 @@ if __name__ == "__main__":
     jds_info_handler.update_kanji_pos()
 
     jds_info_handler.update_kanji_flags()
-    # jds_info_handler.write_kanji_distance()
 
     print("{} ended".format(__file__))

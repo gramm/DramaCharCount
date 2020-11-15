@@ -1,6 +1,8 @@
 import concurrent.futures
 import sys
 
+from mysql.connector import Error
+
 from python.DccUtils import parse_args, exception
 from python.classes.JdsChar import JdsChar
 from python.JdsDatabase import JdsDatabase
@@ -49,14 +51,28 @@ class JdsCharHandler:
         #    chars = self.read_chars_worker(drama)
         #    self.db.push_chars(chars)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            futures = {}
-            for drama in dramas:
-                futures[drama] = executor.submit(self.read_chars_worker, drama)
-            for future in concurrent.futures.as_completed(futures.values()):
-                chars = future.result()
-                self.db.push_chars_count(chars)
-                self.db.push_chars_to_line(chars)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            while len(dramas) > 0:
+                try:
+                    print(len(dramas))
+                    futures = {}
+                    for drama in dramas:
+                        if drama.kanji_ok is 1:
+                            dramas.remove(drama)
+                            continue
+
+                        futures[drama] = executor.submit(self.read_chars_worker, drama)
+                        dramas.remove(drama)
+                        if len(futures) > 10:
+                            break
+                    print("starting new batch...")
+                    for future in concurrent.futures.as_completed(futures.values()):
+                        chars = future.result()
+                        self.db.push_chars_count(chars)
+                        self.db.push_chars_to_line(chars)
+                        self.db.push_kanji_ok(chars)
+                except Error as e:
+                    exception(e)
         self.db.push_chars()
 
 
