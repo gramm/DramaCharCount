@@ -30,6 +30,10 @@
 				</li>
 				<br/>
 				<li class="nav-item text-center ">
+					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-0.php">Not in JDPT</a>
+				</li>
+				<br/>
+				<li class="nav-item text-center ">
 					<a class="nav-link text-warning bg-secondary menu-button" href="jdpt-all.php">All kanji</a>
 				</li>
 				<br/>

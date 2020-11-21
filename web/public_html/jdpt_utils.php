@@ -2,11 +2,22 @@
 
 function drawJdptTable($con, $level)
 {
-	$query = "
-	SELECT * from count, kanji_info, kanji
-	WHERE count.drama_uid = 1 AND count.kanji_uid = kanji_info.kanji_uid  AND kanji.kanji_uid = kanji_info.kanji_uid
-	ORDER BY count.count DESC
-	";
+	$query;
+	if($level != -1){
+		$query = "
+		SELECT * from count, kanji_info, kanji
+		WHERE count.drama_uid = 0 AND count.kanji_uid = kanji_info.kanji_uid  AND kanji.kanji_uid = kanji_info.kanji_uid AND kanji_info.jdpt = ".$level." AND kanji_info.flag = 1
+		ORDER BY count.count DESC
+		";
+	}
+	else{
+		$query = "
+		SELECT * from count, kanji_info, kanji
+		WHERE count.drama_uid = 0 AND count.kanji_uid = kanji_info.kanji_uid  AND kanji.kanji_uid = kanji_info.kanji_uid AND kanji_info.flag = 1
+		ORDER BY count.count DESC
+		";
+	}
+	
 	$result = mysqli_query($con,$query);
 		
 	
@@ -29,10 +40,6 @@ function drawJdptTable($con, $level)
 		$wordTable = "";
 		while($row = mysqli_fetch_array($result))
 		{
-			if((int)$row['jdpt'] != $level){
-				continue;
-			}
-			
 			echo "<tr>";
 				echo "<td>" . $row['value'] . "</a></td>";
 				

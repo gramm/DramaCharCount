@@ -7,5 +7,5 @@
 	
 	<?php
 		include("jdpt_utils.php");
-		drawJdptTable($con, -1);
+		drawJdptTable($con, 0);
 	?>

@@ -272,6 +272,15 @@ class JdsDatabase:
         self.__cursor_execute_thread_safe(sql)
 
     def push_chars(self):
+
+        # delete total count
+        sql = "DELETE FROM count WHERE drama_uid=0"
+        self.__cursor_execute_thread_safe(sql)
+
+        # delete kanji
+        sql = "DELETE FROM kanji"
+        self.__cursor_execute_thread_safe(sql)
+
         sql = "SELECT * FROM count"
         results = self.__cursor_execute_fetchall_thread_safe(sql)
 
@@ -411,3 +420,7 @@ class JdsDatabase:
 
         sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
+
+    def reset_kanji_ok_for_drama(self, drama):
+        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama.uid, 0)
+        self.__cursor_execute_thread_safe(sql)
