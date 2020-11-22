@@ -13,7 +13,7 @@ class JdsInfoHandler:
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
-        self.chars = self.db.get_all_chars()
+        self.chars = self.db.get_all_chars_with_count()
         self.total_count = None
 
     def reset(self):

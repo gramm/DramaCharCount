@@ -120,12 +120,14 @@ function sortTable(n, level) {
     <li class="nav-item">
       <a class="nav-link text-white">|</a>
     </li>
+	<!--
     <li class="nav-item ">
       <a class="nav-link text-white" href="word_count.php">Word Count</a>
     </li>
     <li class="nav-item">
       <a class="nav-link text-white">|</a>
     </li>
+	-->
     <li class="nav-item">
       <a class="nav-link text-white" href="intro.php">JDPT</a>
     </li>

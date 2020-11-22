@@ -28,6 +28,11 @@
 		The JLPT levels were downloaded from <a href="http://www.tanos.co.uk/jlpt/">http://www.tanos.co.uk/jlpt/</a>. Note that there is no official list of kanji or vocabulary, therefore one should not trust
 		this list (or any other) too much.
 		
+		
+		<br />
+		<h2>History</h2>
+		21/11/2020 Original version
+		
 		<!--
 		<h2>Tokenization method</h2>
 		The python script relies 

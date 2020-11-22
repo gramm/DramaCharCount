@@ -84,19 +84,20 @@ class JdsDatabase:
             return False
 
     def __cursor_execute_thread_safe(self, sql):
-        # print(sql)
+        print(sql)
         with JdsDatabase.__lock:
-            self.__cursor.execute(sql)
-            self.__db.commit()
+            # self.__cursor.execute(sql)
+            # self.__db.commit()
+            pass
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
-        # print(sql)
+        print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchone()
 
     def __cursor_execute_fetchall_thread_safe(self, sql):
-        # print(sql)
+        print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
@@ -142,6 +143,28 @@ class JdsDatabase:
             exception(e)
         return lines
 
+    def get_all_chars_with_count(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = """ SELECT a.value, a.kanji_uid, b.count
+                    FROM kanji a
+                    INNER JOIN count b
+                    ON a.kanji_uid = b.kanji_uid
+                    INNER JOIN kanji_info c
+                    ON a.kanji_uid = c.kanji_uid
+                    WHERE b.drama_uid = 0 AND c.flag = 1
+                """
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        chars = {}
+        try:
+            for result in results:
+                c = JdsChar(chr(result['kanji_uid']))
+                c.set_count(result['count'])
+                chars[result['kanji_uid']] = c
+        except Exception as e:
+            exception(e)
+        return chars
+
     def get_all_chars(self):
         if not JdsDatabase.__check_state():
             return
@@ -167,26 +190,6 @@ class JdsDatabase:
         except Exception as e:
             exception(e)
         return res
-
-    #    def push_kanji_info(self, kanjis):
-    #        if not self.__check_state():
-    #            return
-    #
-    #        sql_inserts = []
-    #
-    #        for kanji in kanjis:
-    #            cur_distance_jdtp_to_jlpt = distance_jdtp_to_jlpt[kanji_uid] if kanji_uid in distance_jdtp_to_jlpt else 99
-    #            cur_distance_jltp_to_jdpt = distance_jltp_to_jdpt[kanji_uid] if kanji_uid in distance_jltp_to_jdpt else 99
-    #
-    #            flag = 0
-    #            if is_kanji(value):
-    #                flag = 1
-    #            elif re.match("[ぁ-んァ-ン]", value):
-    #                flag = 2
-    #            else:
-    #                flag = 3
-    #            sql_insert = "({},{},{},{},{},{},{})".format(kanji_uid, cur_jlpt_level, cur_jouyou_level, cur_jdpt_level, cur_distance_jdtp_to_jlpt, cur_distance_jltp_to_jdpt, flag)
-    #            sql_inserts.append(sql_insert)
 
     def push_lines(self, lines):
         if not self.__check_state():
