@@ -86,9 +86,9 @@ class JdsDatabase:
     def __cursor_execute_thread_safe(self, sql):
         print(sql)
         with JdsDatabase.__lock:
-            # self.__cursor.execute(sql)
-            # self.__db.commit()
-            pass
+            self.__cursor.execute(sql)
+            self.__db.commit()
+            # pass
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
         print(sql)
@@ -150,9 +150,7 @@ class JdsDatabase:
                     FROM kanji a
                     INNER JOIN count b
                     ON a.kanji_uid = b.kanji_uid
-                    INNER JOIN kanji_info c
-                    ON a.kanji_uid = c.kanji_uid
-                    WHERE b.drama_uid = 0 AND c.flag = 1
+                    WHERE b.drama_uid = 0
                 """
         results = self.__cursor_execute_fetchall_thread_safe(sql)
         chars = {}
@@ -272,6 +270,13 @@ class JdsDatabase:
     def push_char(self, char):
         # push kanji
         sql = "INSERT INTO kanji (kanji_uid, value) VALUES ({},'{}')".format(char.uid, self.__escape_sql(char.value))
+        self.__cursor_execute_thread_safe(sql)
+
+        #push  total count
+        drama_id = char.drama_uid
+        if drama_id is None:
+            drama_id = 0
+        sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES ({},{},{})".format(char.uid, drama_id, char.count())
         self.__cursor_execute_thread_safe(sql)
 
     def push_chars(self):

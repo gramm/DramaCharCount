@@ -84,7 +84,7 @@ class JdsInfoHandler:
         # set jouyou position
         jouyouDict = self.compute_pos_dict('jouyou')
         position = 1
-        for level in range(len(jouyouDict) - 1, 0, -1):
+        for level in range(1, len(jouyouDict), 1):
             for char in jouyouDict[level]:
                 char.jouyou_pos = position
                 position += 1
