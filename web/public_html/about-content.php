@@ -31,7 +31,9 @@
 		
 		<br />
 		<h2>History</h2>
-		21/11/2020 Original version
+		21/11/2020 Original version<br/>
+		22/11/2020 Fix positions for JLPT/Jōyō<br/>
+
 		
 		<!--
 		<h2>Tokenization method</h2>
