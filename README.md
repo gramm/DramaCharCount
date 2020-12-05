@@ -4,6 +4,13 @@ DramaCharCount (DCC) is a set of Python scripts that aims to count the occurrenc
 In addition, the data is updated to a SQL and used on [jdramastuff.xyz](http://jdramastuff.xyz) to allow browsing the statistics for a particular drama. The source for the website is also contained in this repository but is not required to run the scripts (note that a SQL server is however required, see the Prerequisite chapter).
 
 ### Versions:
+
+##### 1.1.0
+ - Fix all PyCharm warnings
+ - Greatly improve help
+ - Verify generation from scratch
+ - Support settings.py to configure connection info, subtitle path
+ 
 ##### 1.0.0
 
  - Counting of kanji occurences
