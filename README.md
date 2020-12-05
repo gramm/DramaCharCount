@@ -18,7 +18,7 @@ In addition, the data is updated to a SQL and used on [jdramastuff.xyz](http://j
  - Computing of relative position within jōyō, JLPT, JDPT
  - Computing distance between JLPT and JDPT
 
-### Upcomming changes:
+### Upcoming changes:
 Development done in sprints. Please refer to https://github.com/gramm/DramaCharCount/projects/1 to see what is planned. Feel free to mail me at [info@jdramastuff.xyz](mailto:info@jdramastuff.xyz) if you have any questions.
 
 
