@@ -1,6 +1,7 @@
 from threading import Lock
 
 import mysql
+import python.settings as settings
 from mysql.connector import Error
 
 from python.DccUtils import exception
@@ -46,11 +47,10 @@ class JdsDatabase:
             user = args["sql_user"]
             password = args["sql_password"]
         else:
-            print("Trying to connect with default parameters")
-            host = "localhost"
-            database = "db_charcount"
-            user = "admin"
-            password = "adminpw"
+            host = settings.connection_info['host']
+            database = settings.connection_info['database']
+            user = settings.connection_info['user']
+            password = settings.connection_info['password']
         try:
             connection_timeout = 0.1
             print("Connecting {}:{}:{}".format(host, database, user))
