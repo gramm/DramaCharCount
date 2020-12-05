@@ -75,13 +75,17 @@ class JdsCharHandler:
                     exception(e)
         self.db.push_chars()
 
+    def create_tables(self):
+        self.db.create_char_tables()
+
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
     jds_char_handler = JdsCharHandler(sys.argv[1:])
 
-    jds_char_handler.reset()
+    jds_char_handler.create_tables()
+    # jds_char_handler.reset()
 
     jds_char_handler.read_chars()
 

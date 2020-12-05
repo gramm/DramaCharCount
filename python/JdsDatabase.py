@@ -396,6 +396,37 @@ class JdsDatabase:
         self.__cursor.execute(sql)
         print("Creating chars table")
 
+        self.create_char_tables()
+
+        sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
+        self.__cursor.execute(sql)
+
+        self.reset_info()
+
+    def reset_info(self):
+        if not self.__check_state():
+            return
+        sql = "DROP TABLE IF EXISTS kanji_info"
+        self.__cursor.execute(sql)
+
+        sql = "DROP TABLE IF EXISTS word_info"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        self.__cursor.execute(sql)
+
+    def reset_kanji_ok_for_drama(self, drama):
+        if not self.__check_state():
+            return
+        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama.uid, 0)
+        self.__cursor_execute_thread_safe(sql)
+
+    def create_char_tables(self):
+        if not self.__check_state():
+            return
         sql = "CREATE TABLE count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
@@ -410,22 +441,3 @@ class JdsDatabase:
 
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
         self.__cursor.execute(sql)
-
-        self.reset_info()
-
-    def reset_info(self):
-        sql = "DROP TABLE IF EXISTS kanji_info"
-        self.__cursor.execute(sql)
-
-        sql = "DROP TABLE IF EXISTS word_info"
-        self.__cursor.execute(sql)
-
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
-        self.__cursor.execute(sql)
-
-        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
-        self.__cursor.execute(sql)
-
-    def reset_kanji_ok_for_drama(self, drama):
-        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama.uid, 0)
-        self.__cursor_execute_thread_safe(sql)

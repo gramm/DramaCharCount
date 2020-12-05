@@ -46,9 +46,9 @@ def parse_args(argv):
     }
     if not argv:  # if no arg return from settings.py
         ret_dict["sql_host"] = settings.connection_info['host']
-        ret_dict["sql_user"] = settings.connection_info['database']
-        ret_dict["sql_password"] = settings.connection_info['user']
-        ret_dict["sql_database"] = settings.connection_info['password']
+        ret_dict["sql_database"] = settings.connection_info['database']
+        ret_dict["sql_user"] = settings.connection_info['user']
+        ret_dict["sql_password"] = settings.connection_info['password']
         ret_dict["path"] = settings.subtitles_path
         return ret_dict
     try:
