@@ -8,9 +8,9 @@ from python.classes.JdsDrama import JdsDrama
 
 
 class JdsDramaHandler:
-    '''
+    """
     Find all the drama in the given folder (i.e. top level subfolders), assign a uid and push then to the database
-    '''
+    """
 
     def __init__(self, argv):
         self.args = parse_args(argv)

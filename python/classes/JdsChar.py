@@ -1,7 +1,3 @@
-import struct
-import logging
-
-
 class JdsChar:
     def __key(self):
         return self.uid

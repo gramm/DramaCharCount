@@ -7,8 +7,6 @@ from python.DccUtils import parse_args
 
 
 def reset_tables(db):
-    ans = input("Choice: 1=all, 2=char, 3=word, 4=lines");
-
     mycursor = db.cursor()
 
     # drop all tables
@@ -24,7 +22,6 @@ def reset_tables(db):
 
     sql = "DROP TABLE IF EXISTS word_flag"
     mycursor.execute(sql)
-
 
     sql = "DROP TABLE IF EXISTS word_to_line"
     mycursor.execute(sql)

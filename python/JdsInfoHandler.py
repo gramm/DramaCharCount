@@ -1,12 +1,11 @@
-import concurrent.futures
 import csv
 import re
 import sys
-from operator import attrgetter, methodcaller
+from operator import methodcaller
 
-from python.DccUtils import parse_args, exception, is_kanji
-from python.classes.JdsChar import JdsChar
+from python.DccUtils import parse_args, is_kanji
 from python.JdsDatabase import JdsDatabase
+from python.classes.JdsChar import JdsChar
 
 
 class JdsInfoHandler:
@@ -52,21 +51,21 @@ class JdsInfoHandler:
 
     def compute_pos_dict(self, jlpt_or_jouyou):
         # sort chars by jlpt then by count
-        myDict = dict()
+        my_dict = dict()
 
         for char in self.chars.values():
             if jlpt_or_jouyou is 'jlpt':
-                if char.jlpt not in myDict:
-                    myDict[char.jlpt] = []
-                myDict[char.jlpt].append(char)
+                if char.jlpt not in my_dict:
+                    my_dict[char.jlpt] = []
+                my_dict[char.jlpt].append(char)
             else:
-                if char.jouyou not in myDict:
-                    myDict[char.jouyou] = []
-                myDict[char.jouyou].append(char)
+                if char.jouyou not in my_dict:
+                    my_dict[char.jouyou] = []
+                my_dict[char.jouyou].append(char)
 
-        for level in myDict:
-            myDict[level].sort(key=methodcaller('count'), reverse=True)
-        return myDict
+        for level in my_dict:
+            my_dict[level].sort(key=methodcaller('count'), reverse=True)
+        return my_dict
 
     def update_kanji_pos(self):
 
@@ -74,25 +73,25 @@ class JdsInfoHandler:
         self.total_count = self.db.get_count_for_drama(JdsDatabase.get_merged_drama())
 
         # set jlpt position
-        jlptDict = self.compute_pos_dict('jlpt')
+        jlpt_dict = self.compute_pos_dict('jlpt')
         position = 1
-        for level in range(len(jlptDict) - 1, 0, -1):
-            for char in jlptDict[level]:
+        for level in range(len(jlpt_dict) - 1, 0, -1):
+            for char in jlpt_dict[level]:
                 char.jlpt_pos = position
                 position += 1
 
         # set jouyou position
-        jouyouDict = self.compute_pos_dict('jouyou')
+        jouyou_dict = self.compute_pos_dict('jouyou')
         position = 1
-        for level in range(1, len(jouyouDict), 1):
-            for char in jouyouDict[level]:
+        for level in range(1, len(jouyou_dict), 1):
+            for char in jouyou_dict[level]:
                 char.jouyou_pos = position
                 position += 1
 
         # set jdpt position
         char_per_level = {}
-        for level in range(len(jlptDict) - 1, 0, -1):
-            char_per_level[level] = len(jlptDict[level])
+        for level in range(len(jlpt_dict) - 1, 0, -1):
+            char_per_level[level] = len(jlpt_dict[level])
 
         position = 1
         cur_level = 5
@@ -114,7 +113,6 @@ class JdsInfoHandler:
 
     def update_kanji_flags(self):
         for char in self.chars.values():
-            flag = 0
             if is_kanji(char.value):
                 char.flag = 1
             elif re.match("[ぁ-んァ-ン]", char.value):

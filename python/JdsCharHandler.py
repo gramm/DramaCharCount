@@ -17,12 +17,12 @@ class JdsCharHandler:
         return self.db.reset_chars()
 
     def read_chars_worker(self, drama):
-        '''
+        """
         threaded worker that counts all characters for a given drama, by getting all lines from the DB and counting the char.
         requires drama,lines to be in the DB beforehand
         :param drama:
         :return:
-        '''
+        """
         print("start read_chars_worker for {}".format(drama.value))
         chars = {}  # key = char, value = count
         jds_lines = self.db.get_lines_for_drama(drama)
@@ -39,7 +39,7 @@ class JdsCharHandler:
                 except Exception as e:
                     exception(e)
         if "\n" in chars:
-            del chars["\n"]
+            del chars[JdsChar("\n")]
             print("Deleted \\n")
         print("stop read_chars_worker for {} with {} chars".format(drama.value, len(chars)))
         return chars

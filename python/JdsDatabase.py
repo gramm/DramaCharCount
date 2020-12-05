@@ -1,11 +1,9 @@
-import re
-from collections import Set
 from threading import Lock
 
 import mysql
 from mysql.connector import Error
 
-from python.DccUtils import exception, is_kanji
+from python.DccUtils import exception
 from python.classes.JdsChar import JdsChar
 from python.classes.JdsDrama import JdsDrama
 from python.classes.JdsLine import JdsLine
@@ -229,7 +227,6 @@ class JdsDatabase:
         if len(chars) is 0:
             return
         sql_inserts = []
-        char: JdsChar
         for char in chars.keys():
             count = 0
             for line_uid in char.lines:
@@ -262,7 +259,7 @@ class JdsDatabase:
         char = None
         for char_uid, mychar in chars.items():
             char = mychar
-            break;
+            break
 
         sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(char.drama_uid, True)
         self.__cursor_execute_thread_safe(sql)
@@ -272,7 +269,7 @@ class JdsDatabase:
         sql = "INSERT INTO kanji (kanji_uid, value) VALUES ({},'{}')".format(char.uid, self.__escape_sql(char.value))
         self.__cursor_execute_thread_safe(sql)
 
-        #push  total count
+        # push  total count
         drama_id = char.drama_uid
         if drama_id is None:
             drama_id = 0
