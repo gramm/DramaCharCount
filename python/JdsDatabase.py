@@ -427,16 +427,19 @@ class JdsDatabase:
     def create_char_tables(self):
         if not self.__check_state():
             return
-        sql = "CREATE TABLE count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
+        sql = "CREATE TABLE IF NOT EXISTS  count (kanji_uid INT UNSIGNED, drama_uid SMALLINT , count INT UNSIGNED, INDEX(kanji_uid), INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value VARCHAR(1))"
+        sql = "CREATE TABLE IF NOT EXISTS kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value VARCHAR(1))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
+        sql = "CREATE TABLE IF NOT EXISTS kanji_to_line (kanji_uid INT UNSIGNED, line_uid INT UNSIGNED , INDEX(kanji_uid), INDEX(line_uid)) "
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_to_line (kanji_uid INT UNSIGNED, line_uid INT UNSIGNED , INDEX(kanji_uid), INDEX(line_uid))"
+        sql = "DROP TABLE IF EXISTS kanji_flag"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE IF NOT EXISTS kanji_flag (id SMALLINT PRIMARY KEY NOT NULL, value VARCHAR(255), INDEX(id,value))"
         self.__cursor.execute(sql)
 
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
