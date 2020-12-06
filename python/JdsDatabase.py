@@ -103,7 +103,8 @@ class JdsDatabase:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
 
-    def __drama_from_query_result(self, result):
+    @staticmethod
+    def __drama_from_query_result(result):
         drama = JdsDrama(result['drama_uid'], result['name'])
         drama.word_ok = result['word_ok']
         drama.kanji_ok = result['kanji_ok']
@@ -155,7 +156,7 @@ class JdsDatabase:
             for result in results:
                 if result['drama_uid'] not in lines_by_drama:
                     lines_by_drama[result['drama_uid']] = []
-                lines_by_drama[result['drama_uid']].append(JdsLine(result['line_uid'], result['drama_uid'], result['value']))
+                lines_by_drama[result['drama_uid']].append(JdsLine(result['line_uid'], result['drama_uid'], result['value'], result['episode_uid']))
         except Exception as e:
             exception(e)
         return lines_by_drama
@@ -291,8 +292,10 @@ class JdsDatabase:
         if len(chars) is 0:
             return
         sql_inserts = []
+        drama_uid = None
         for char_uid, char in chars.items():
             count = 0
+            drama_uid = char.drama_uid
             for line_uid in char.lines:
                 sql_insert = "({},{})".format(char.uid, line_uid)
                 sql_inserts.append(sql_insert)
@@ -305,14 +308,16 @@ class JdsDatabase:
         self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
 
-        sql = "INSERT INTO drama (drama_uid, kanji_line_ref_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_line_ref_ok=VALUES(kanji_line_ref_ok)".format(char.drama_uid, True)
+        sql = "INSERT INTO drama (drama_uid, kanji_line_ref_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_line_ref_ok=VALUES(kanji_line_ref_ok)".format(drama_uid, True)
         self.__cursor_execute_thread_safe(sql)
 
     def push_chars_count(self, chars):
         if len(chars) is 0:
             return
         sql_inserts = []
+        drama_uid = None
         for char_uid, char in chars.items():
+            drama_uid = char.drama_uid
             sql_insert = "({},{},{},{})".format(char.uid, char.drama_uid, char.count(), char.episode_count)
             sql_inserts.append(sql_insert)
 
@@ -320,7 +325,7 @@ class JdsDatabase:
         self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
 
-        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(char.drama_uid, True)
+        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama_uid, True)
         self.__cursor_execute_thread_safe(sql)
 
     def push_char(self, char):

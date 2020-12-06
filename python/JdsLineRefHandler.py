@@ -29,7 +29,7 @@ class JdsLineRefHandler:
         lines = {}  # key = char, value = [] of line_uid
         jds_lines = self.db.get_lines_for_drama(drama)
         print("start line_ref_worker for {}".format(drama.value))
-        start_time = time.perf_counter()
+        cur_start_time = time.perf_counter()
         for jds_line in jds_lines:
             for char in jds_line.value:
                 try:
@@ -47,7 +47,7 @@ class JdsLineRefHandler:
         if "\n" in lines:
             del lines[JdsChar("\n")]
             print("Deleted \\n")
-        run_time = time.perf_counter() - start_time
+        run_time = time.perf_counter() - cur_start_time
         print("stop line_ref_worker for {} with {} chars in {}".format(drama.value, len(lines), run_time))
         return jds_chars
 
@@ -79,6 +79,7 @@ if __name__ == "__main__":
     print("{} started".format(__file__))
     start_time = time.perf_counter()
 
+    pr = None
     if settings.enable_profiler:
         pr = cProfile.Profile()
         pr.enable()

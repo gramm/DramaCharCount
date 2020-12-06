@@ -1,18 +1,17 @@
 import cProfile
 import csv
-import os
 import sys
 import time
 
-from python import DccUtils, settings
+from python import settings
 from python.DccUtils import parse_args
 from python.JdsDatabase import JdsDatabase
-from python.classes.JdsDrama import JdsDrama
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
     start_time = time.perf_counter()
 
+    pr = None
     if settings.enable_profiler:
         pr = cProfile.Profile()
         pr.enable()
@@ -30,7 +29,7 @@ if __name__ == "__main__":
         for result in kanji_info_results:
             if result['flag'] is not 1:
                 continue
-            row = {}
+            row = dict()
             rows[result['kanji_uid']] = row
             row['kanji'] = chr(result['kanji_uid'])
             row['jouyou'] = result['jouyou']

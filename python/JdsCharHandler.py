@@ -27,11 +27,10 @@ class JdsCharHandler:
         :return:
         """
         chars = {}  # key = char, value = count
-        lines = {}  # key = char, value = [] of line_uid
         episodes = {}
 
         print("start read_chars_worker for {}".format(drama.value))
-        start_time = time.perf_counter()
+        cur_start_time = time.perf_counter()
         jds_lines = self.db.get_lines_for_drama(drama)
         for jds_line in jds_lines:
             try:
@@ -54,7 +53,7 @@ class JdsCharHandler:
         if "\n" in chars:
             del chars[JdsChar("\n")]
             print("Deleted \\n")
-        run_time = time.perf_counter() - start_time
+        run_time = time.perf_counter() - cur_start_time
         print("stop read_chars_worker for {} with {} chars in {:2.2f}".format(drama.value, len(chars), run_time))
         return jds_chars
 
@@ -90,6 +89,7 @@ if __name__ == "__main__":
     print("{} started".format(__file__))
     start_time = time.perf_counter()
 
+    pr = None
     if settings.enable_profiler:
         pr = cProfile.Profile()
         pr.enable()

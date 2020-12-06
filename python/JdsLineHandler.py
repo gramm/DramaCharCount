@@ -29,7 +29,6 @@ class JdsLineHandler:
         lines = []
         drama = self.db.get_drama(os.path.basename(subfolder))
         print("read_lines for drama {}".format(drama.uid))
-        subfolders = DccUtils.get_subfolders(self.args["path"])
         for filepath in DccUtils.get_files(subfolder):
             filename = os.path.basename(filepath)
             with open(filepath, encoding='utf-8') as file:
@@ -70,6 +69,7 @@ if __name__ == "__main__":
     print("{} started".format(__file__))
     start_time = time.perf_counter()
 
+    pr = None
     if settings.enable_profiler:
         pr = cProfile.Profile()
         pr.enable()
