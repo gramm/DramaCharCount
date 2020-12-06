@@ -71,7 +71,7 @@ class JdsInfoHandler:
 
     def update_kanji_pos(self):
 
-        # get all char count and sort by count
+        # get all char count
         self.total_count = self.db.get_count_for_drama(JdsDatabase.get_merged_drama())
 
         # set jlpt position
@@ -95,13 +95,24 @@ class JdsInfoHandler:
         for level in range(len(jlpt_dict) - 1, 0, -1):
             char_per_level[level] = len(jlpt_dict[level])
 
+        # find sum of all kanji count
+        sum_all_count = 0
+        for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
+            if is_kanji(self.chars[char_uid].value):
+                sum_all_count += self.chars[char_uid].count()
         position = 1
         cur_level = 5
         cur_count = 0
+        freq_cum = 0
         for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
             if is_kanji(self.chars[char_uid].value):
+                count = self.total_count[char_uid]
+                freq = count / sum_all_count
                 self.chars[char_uid].jdpt_pos = position
-                self.chars[char_uid].set_count(self.total_count[char_uid])
+                self.chars[char_uid].freq = freq
+                self.chars[char_uid].freq_cum = freq_cum + freq
+                freq_cum += freq
+                self.chars[char_uid].set_count(count)
                 position += 1
 
                 if cur_level > 0:

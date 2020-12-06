@@ -6,6 +6,8 @@ class JdsChar:
         return hash(self.__key())
 
     def __eq__(self, other):
+        # Two JdsChar are equals if they have the same uid (i.e. binary value of Char) or the same value (i.e. same Char)
+        # Therefore depending of the type of other (Char or binary value of Char) we need to compare either to self.uid or self.value
         if isinstance(other, JdsChar):
             return self.__key() == other.__key()
         elif isinstance(other, int):
@@ -26,6 +28,8 @@ class JdsChar:
         self.jouyou_pos = 0
         self.jdpt_pos = 0
         self.flag = 0
+        self.freq = 0
+        self.freq_cum = 0
         self.__count = 0
         self.__count_round = None
 
