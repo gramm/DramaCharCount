@@ -449,7 +449,7 @@ class JdsDatabase:
         self.__cursor.execute(sql)
 
         print("Creating table 'line'")
-        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, episode_uid SMALLINT UNSIGNED NOT NULL, value TEXT, INDEX(line_uid), INDEX(episode_uid))"
+        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, episode_uid SMALLINT UNSIGNED NOT NULL, value TEXT, INDEX(line_uid), INDEX(episode_uid), INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
     def reset_dramas(self):
@@ -502,10 +502,10 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS word_info"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT,freq FLOAT, cumul_freq FLOAT,drama_freq FLOAT,episode_freq FLOAT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT ,  flag TINYINT, freq FLOAT, cumul_freq FLOAT, drama_freq FLOAT, episode_freq FLOAT, INDEX(kanji_uid),INDEX(jlpt), INDEX(jouyou), INDEX(jdpt), INDEX(jlpt_pos), INDEX(jouyou_pos),INDEX(jdpt_pos), INDEX(flag))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, freq FLOAT, cumul_freq FLOAT, drama_freq FLOAT, episode_freq FLOAT,INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL,   jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED,                          flag TINYINT, freq FLOAT, cumul_freq FLOAT, drama_freq FLOAT, episode_freq FLOAT, INDEX(word_uid),INDEX(jlpt), INDEX(jouyou), INDEX(jdpt), INDEX(jlpt_pos), INDEX(jouyou_pos),INDEX(jdpt_pos), INDEX(flag))"
         self.__cursor.execute(sql)
 
     def reset_kanji_ok_for_all_drama(self):

@@ -30,8 +30,8 @@ class JdsCharHandler:
         episodes = {}
 
         print("start read_chars_worker for {}".format(drama.value))
-        cur_start_time = time.perf_counter()
         jds_lines = self.db.get_lines_for_drama(drama)
+        cur_start_time = time.perf_counter()
         for jds_line in jds_lines:
             try:
                 for char in jds_line.value:
