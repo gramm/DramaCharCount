@@ -106,21 +106,21 @@ class JdsInfoHandler:
         position = 1
         cur_level = 6
         jdpt_limits = [1, 0.99, 0.98, 0.95, 0.9, 0.75, 0.5]
-        freq_cum = 0
+        cumul_freq = 0
         for char_uid in sorted(self.total_count, key=self.total_count.get, reverse=True):
             if is_kanji(self.chars[char_uid].value):
                 count = self.total_count[char_uid]
                 freq = count / sum_all_count
                 self.chars[char_uid].jdpt_pos = position
                 self.chars[char_uid].freq = freq
-                self.chars[char_uid].freq_cum = freq_cum + freq
-                freq_cum += freq
+                self.chars[char_uid].cumul_freq = cumul_freq + freq
+                cumul_freq += freq
                 self.chars[char_uid].set_count(count)
                 position += 1
 
-                if freq_cum > jdpt_limits[cur_level]:
+                if cumul_freq > jdpt_limits[cur_level]:
                     cur_level -= 1
-                if freq_cum < jdpt_limits[cur_level]:
+                if cumul_freq < jdpt_limits[cur_level]:
                     self.chars[char_uid].jdpt = cur_level - 1
 
         self.db.push_kanji_pos(self.chars)

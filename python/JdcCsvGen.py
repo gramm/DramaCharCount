@@ -23,7 +23,7 @@ if __name__ == "__main__":
     kanji_count_results = db.get_kanji_count_raw()
 
     with open(settings.csv_path_kanji, mode='w', encoding='utf-8', newline='') as csv_file:
-        fieldnames = ['kanji', 'count', 'freq', 'freq_cum', 'jdpt', 'jdpt_pos', 'jouyou', 'jouyou_pos']
+        fieldnames = ['kanji', 'count', 'freq', 'cumul_freq', 'drama_freq', 'episode_freq', 'jdpt', 'jdpt_pos', 'jouyou', 'jouyou_pos']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames, delimiter='\t')
         rows = {}
         writer.writeheader()
@@ -38,7 +38,9 @@ if __name__ == "__main__":
             row['jdpt'] = result['jdpt']
             row['jdpt_pos'] = result['jdpt_pos']
             row['freq'] = result['freq']
-            row['freq_cum'] = result['freq_cum']
+            row['cumul_freq'] = result['cumul_freq']
+            row['drama_freq'] = result['drama_freq']
+            row['episode_freq'] = result['episode_freq']
 
         for result in kanji_count_results:
             if result['drama_uid'] is not JdsDatabase.get_merged_drama().uid:

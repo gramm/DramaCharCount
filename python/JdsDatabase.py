@@ -395,10 +395,10 @@ class JdsDatabase:
     def push_kanji_pos(self, chars):
         sql_inserts = []
         for char in chars.values():
-            sql_insert = "({},{},{},{},{},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos, char.jdpt, char.jdpt_to_jlpt(), char.freq, char.freq_cum)
+            sql_insert = "({},{},{},{},{},{},{},{})".format(char.uid, char.jlpt_pos, char.jouyou_pos, char.jdpt_pos, char.jdpt, char.jdpt_to_jlpt(), char.freq, char.cumul_freq)
             sql_inserts.append(sql_insert)
 
-        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos, jdpt, jdpt_to_jlpt, freq, freq_cum) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos), jdpt=VALUES(jdpt), jdpt_to_jlpt=VALUES(jdpt_to_jlpt), freq=VALUES(freq), freq_cum=VALUES(freq_cum)".format(",".join(sql_inserts))
+        sql = "INSERT INTO kanji_info (kanji_uid, jlpt_pos, jouyou_pos, jdpt_pos, jdpt, jdpt_to_jlpt, freq, cumul_freq) VALUES {} ON DUPLICATE KEY UPDATE kanji_uid=VALUES(kanji_uid), jlpt_pos=VALUES(jlpt_pos), jouyou_pos=VALUES(jouyou_pos), jdpt_pos=VALUES(jdpt_pos), jdpt=VALUES(jdpt), jdpt_to_jlpt=VALUES(jdpt_to_jlpt), freq=VALUES(freq), cumul_freq=VALUES(cumul_freq)".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
 
     def push_drama_and_episode_count(self, char_drama_freq, char_episode_freq):
@@ -488,10 +488,10 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS word_info"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT,freq FLOAT, freq_cum FLOAT,drama_freq FLOAT,episode_freq FLOAT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        sql = "CREATE TABLE kanji_info (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos  SMALLINT UNSIGNED, jouyou_pos  SMALLINT UNSIGNED, jdpt_pos SMALLINT UNSIGNED, jdpt_to_jlpt SMALLINT , flag TINYINT,freq FLOAT, cumul_freq FLOAT,drama_freq FLOAT,episode_freq FLOAT, INDEX(kanji_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, freq FLOAT, freq_cum FLOAT, drama_freq FLOAT, episode_freq FLOAT,INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
+        sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, freq FLOAT, cumul_freq FLOAT, drama_freq FLOAT, episode_freq FLOAT,INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
 
     def reset_kanji_ok_for_all_drama(self):
