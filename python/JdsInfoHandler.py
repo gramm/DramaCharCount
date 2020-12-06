@@ -2,6 +2,7 @@ import cProfile
 import csv
 import re
 import sys
+import time
 from operator import methodcaller
 
 from python import settings
@@ -137,6 +138,7 @@ class JdsInfoHandler:
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
+    start_time = time.perf_counter()
 
     if settings.enable_profiler:
         pr = cProfile.Profile()
@@ -152,7 +154,7 @@ if __name__ == "__main__":
 
     jds_info_handler.update_kanji_flags()
 
-    print("{} ended".format(__file__))
+    print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
 
     if settings.enable_profiler:
         pr.disable()

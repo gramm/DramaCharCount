@@ -15,7 +15,6 @@ class JdsCharHandler:
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
-        self.lines_by_drama = None
 
     def reset(self):
         return self.db.reset_chars()
@@ -29,11 +28,10 @@ class JdsCharHandler:
         """
         chars = {}  # key = char, value = count
         lines = {}  # key = char, value = [] of line_uid
-        if drama.uid not in self.lines_by_drama:
-            return chars
-        jds_lines = self.lines_by_drama[drama.uid]
+
         print("start read_chars_worker for {}".format(drama.value))
         start_time = time.perf_counter()
+        jds_lines = self.db.get_lines_for_drama(drama)
         for jds_line in jds_lines:
             for char in jds_line.value:
                 try:
@@ -52,12 +50,11 @@ class JdsCharHandler:
             del chars[JdsChar("\n")]
             print("Deleted \\n")
         run_time = time.perf_counter() - start_time
-        print("stop read_chars_worker for {} with {} chars in {}".format(drama.value, len(chars), run_time))
+        print("stop read_chars_worker for {} with {} chars in {:2.2f}".format(drama.value, len(chars), run_time))
         return jds_chars
 
     def read_chars(self):
         dramas = self.db.get_all_dramas()
-        self.lines_by_drama = self.db.get_all_lines_by_drama()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             while len(dramas) > 0:
@@ -73,7 +70,6 @@ class JdsCharHandler:
                         dramas.remove(drama)
                         if len(futures) > 10:
                             break
-                    print("starting new batch...")
                     for future in concurrent.futures.as_completed(futures.values()):
                         chars = future.result()
                         self.db.push_chars_count(chars)
@@ -87,6 +83,7 @@ class JdsCharHandler:
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
+    start_time = time.perf_counter()
 
     if settings.enable_profiler:
         pr = cProfile.Profile()
@@ -97,11 +94,10 @@ if __name__ == "__main__":
     jds_char_handler.create_tables()
 
     # uncomment to clear all drama count i.e. restart counting (drama, lines untouched)
-    jds_char_handler.reset()
+    # jds_char_handler.reset()
 
     jds_char_handler.read_chars()
-
-    print("{} ended".format(__file__))
+    print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
 
     if settings.enable_profiler:
         pr.disable()

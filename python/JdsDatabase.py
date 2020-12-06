@@ -140,6 +140,7 @@ class JdsDatabase:
         if not JdsDatabase.__check_state():
             return
         sql = "SELECT * FROM line "
+
         results = self.__cursor_execute_fetchall_thread_safe(sql)
 
         lines_by_drama = {}

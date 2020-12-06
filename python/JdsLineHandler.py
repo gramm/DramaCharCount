@@ -1,6 +1,7 @@
 import cProfile
 import os
 import sys
+import time
 
 from python import DccUtils, settings
 from python.DccUtils import parse_args, exception
@@ -47,6 +48,7 @@ class JdsLineHandler:
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
+    start_time = time.perf_counter()
 
     if settings.enable_profiler:
         pr = cProfile.Profile()
@@ -58,7 +60,7 @@ if __name__ == "__main__":
 
     jds_line_handler.read_lines()
 
-    print("{} ended".format(__file__))
+    print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
 
     if settings.enable_profiler:
         pr.disable()

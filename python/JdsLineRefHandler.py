@@ -15,7 +15,6 @@ class JdsLineRefHandler:
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
-        self.lines_by_drama = None
 
     def reset(self):
         return self.db.reset_line_refs()
@@ -28,9 +27,7 @@ class JdsLineRefHandler:
         :return:
         """
         lines = {}  # key = char, value = [] of line_uid
-        if drama.uid not in self.lines_by_drama:
-            return {}
-        jds_lines = self.lines_by_drama[drama.uid]
+        jds_lines = self.db.get_lines_for_drama(drama)
         print("start line_ref_worker for {}".format(drama.value))
         start_time = time.perf_counter()
         for jds_line in jds_lines:
@@ -56,7 +53,6 @@ class JdsLineRefHandler:
 
     def do_line_ref(self):
         dramas = self.db.get_all_dramas()
-        self.lines_by_drama = self.db.get_all_lines_by_drama()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             while len(dramas) > 0:
@@ -81,6 +77,7 @@ class JdsLineRefHandler:
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
+    start_time = time.perf_counter()
 
     if settings.enable_profiler:
         pr = cProfile.Profile()
@@ -93,7 +90,7 @@ if __name__ == "__main__":
 
     jds_line_ref_handler.do_line_ref()
 
-    print("{} ended".format(__file__))
+    print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
 
     if settings.enable_profiler:
         pr.disable()

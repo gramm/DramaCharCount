@@ -1,22 +1,8 @@
 
+
 # DramaCharCount
 DramaCharCount (DCC) is a set of Python scripts that aims to count the occurrence of each characters and words in Japanese drama subtitle files, and generate some statistics on their use. In particular, it generates a tongue-in-cheek "Japanese Drama Proficiency Test" list that groups the characters or words in a way similar to the jōyō kanji or unofficial JLPT lists.
 In addition, the data is updated to a SQL and used on [jdramastuff.xyz](http://jdramastuff.xyz) to allow browsing the statistics for a particular drama. The source for the website is also contained in this repository but is not required to run the scripts (note that a SQL server is however required, see the Prerequisite chapter).
-
-### Versions:
-
-##### 1.1.0
- - Fix all PyCharm warnings
- - Greatly improve help
- - Verify generation from scratch
- - Support settings.py to configure connection info, subtitle path
- 
-##### 1.0.0
-
- - Counting of kanji occurences
- - Generation of JDPT levels based on number of kanji in JLPT levels
- - Computing of relative position within jōyō, JLPT, JDPT
- - Computing distance between JLPT and JDPT
 
 ### Upcoming changes:
 Development done in sprints. Please refer to https://github.com/gramm/DramaCharCount/projects/1 to see what is planned. Feel free to mail me at [info@jdramastuff.xyz](mailto:info@jdramastuff.xyz) if you have any questions.
@@ -32,15 +18,34 @@ Development done in sprints. Please refer to https://github.com/gramm/DramaCharC
 DCC can be configured in two ways:
 - Either by editing settings.py, then calling the scripts without arguments, for example
 
-    > connection_info = dict(  
-    >     host="localhost",  
-    >     database="db_charcount",  
-    >     user="admin",  
-    >     password="adminpw"   )   
-    >     subtitles_path = "C:/path/to/subtitles/"
+	    connection_info = dict(
+        host="localhost",  
+        database="db_charcount",  
+        user="admin",  
+        password="adminpw"   )   
+        subtitles_path = "C:/path/to/subtitles/"
+
+
 
 - Or by passing all arguments as argument to the script, for example
-  > DramaCharCount.py --host=localhost  --user=admin --password=adminpw --database=my_sql_database --path=C:/path/to/subtitles/
+
+	    DramaCharCount.py --host=localhost  --user=admin --password=adminpw --database=my_sql_database --path=C:/path/to/subtitles/
+    
+	
+
+Other configuration options are all contained in settings.py and should be relatively straightforward:
+
+     # Absolute path to the directory containing all subtitle files
+     subtitles_path = "C:/Users/Max/Documents/_tmp/all_drama/"
+     
+     # Enable to print SQL requests in the console
+     print_sql = False
+     
+     # Enable to profile execution time of scripts
+     enable_profiler = False
+     
+     # Path to CSV dump (used in JdcCsvGen.py)
+     csv_path_kanji = "../web/public_html/data_kanji_raw.csv"
 
 ### Subtitle folder structure
 DCC will assume that each subfolder under the subtitles_path folder represents one drama i.e. the name of the subfolder will be used as drama name. All nested files in a given subfolder will be considered as a subtitle file for this drama, with one file assumed to correspond to one episode of the drama.
@@ -54,6 +59,27 @@ The steps are as follow:
  - Create the drama table by executing JdsDramaHandler
  - Load all subtitle lines in the line table by executing JdsLineHandler
  - Count all characters by executing JdsCharHandler. Note that this script will mark a drama as "processed"  (drama[kanji_ok]=1) and will skip processed dramas on execution. It is therefore safe to interrupt the script to continue executing it later, or to execute it again if for example the MySQL connection failed. Clearing the "processed" state can be done by dropping all character info via  jds_char_handler.reset()
- - Build reference of each character to all lines containing this character by executin JdsLineHandler. The philosophy is identical to JdsCharHandler i.e. drama[kanji_line_ref_ok] will indicate drama to skip.
+ - Optional: build reference of each character to all lines containing this character by executin JdsLineHandler. This script is used to be able to display example usage of characters in a given drama when browed from [jdramastuff.xyz](http://jdramastuff.xyz). The philosophy is identical to JdsCharHandler i.e. drama[kanji_line_ref_ok] will indicate drama to skip. 
  - Generate statistics by executing JdsInfoHandler
+ - Optional: Generate CSV output by execution JdsCsvGen
+
+### Changelog:
+
+##### 1.2.0
+ - Improve runtime of char count
+ - Separate char count and line to char ref
+ - Add CSV generator for raw kanji info
+ - Add computation of frequency and cumulative frequency
+##### 1.1.0
+ - Fix all PyCharm warnings
+ - Greatly improve help
+ - Verify generation from scratch
+ - Support settings.py to configure connection info, subtitle path
+ 
+##### 1.0.0
+
+ - Counting of kanji occurences
+ - Generation of JDPT levels based on number of kanji in JLPT levels
+ - Computing of relative position within jōyō, JLPT, JDPT
+ - Computing distance between JLPT and JDPT
 
