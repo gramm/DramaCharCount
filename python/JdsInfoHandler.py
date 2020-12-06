@@ -1,8 +1,10 @@
+import cProfile
 import csv
 import re
 import sys
 from operator import methodcaller
 
+from python import settings
 from python.DccUtils import parse_args, is_kanji
 from python.JdsDatabase import JdsDatabase
 from python.classes.JdsChar import JdsChar
@@ -125,6 +127,10 @@ class JdsInfoHandler:
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
+    if settings.enable_profiler:
+        pr = cProfile.Profile()
+        pr.enable()
+
     jds_info_handler = JdsInfoHandler(sys.argv[1:])
 
     jds_info_handler.reset()
@@ -136,3 +142,7 @@ if __name__ == "__main__":
     jds_info_handler.update_kanji_flags()
 
     print("{} ended".format(__file__))
+
+    if settings.enable_profiler:
+        pr.disable()
+        pr.print_stats(sort="cumulative")

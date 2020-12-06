@@ -4,6 +4,7 @@ import time
 
 from mysql.connector import Error
 
+from python import settings
 from python.DccUtils import parse_args, exception
 from python.classes.JdsChar import JdsChar
 from python.JdsDatabase import JdsDatabase
@@ -91,8 +92,9 @@ class JdsCharHandler:
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
-    pr = cProfile.Profile()
-    pr.enable()
+    if settings.enable_profiler:
+        pr = cProfile.Profile()
+        pr.enable()
 
     jds_char_handler = JdsCharHandler(sys.argv[1:])
 
@@ -105,6 +107,6 @@ if __name__ == "__main__":
 
     print("{} ended".format(__file__))
 
-    pr.disable()
-    # after your program ends
-    pr.print_stats(sort="cumulative")
+    if settings.enable_profiler:
+        pr.disable()
+        pr.print_stats(sort="cumulative")

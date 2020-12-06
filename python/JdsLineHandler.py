@@ -1,7 +1,8 @@
+import cProfile
 import os
 import sys
 
-from python import DccUtils
+from python import DccUtils, settings
 from python.DccUtils import parse_args, exception
 from python.JdsDatabase import JdsDatabase
 from python.classes.JdsLine import JdsLine
@@ -47,6 +48,10 @@ class JdsLineHandler:
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
+    if settings.enable_profiler:
+        pr = cProfile.Profile()
+        pr.enable()
+
     jds_line_handler = JdsLineHandler(sys.argv[1:])
 
     jds_line_handler.reset()
@@ -54,3 +59,7 @@ if __name__ == "__main__":
     jds_line_handler.read_lines()
 
     print("{} ended".format(__file__))
+
+    if settings.enable_profiler:
+        pr.disable()
+        pr.print_stats(sort="cumulative")

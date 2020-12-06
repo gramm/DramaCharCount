@@ -1,7 +1,8 @@
+import cProfile
 import os
 import sys
 
-from python import DccUtils
+from python import DccUtils, settings
 from python.DccUtils import parse_args
 from python.JdsDatabase import JdsDatabase
 from python.classes.JdsDrama import JdsDrama
@@ -30,6 +31,10 @@ class JdsDramaHandler:
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
+    if settings.enable_profiler:
+        pr = cProfile.Profile()
+        pr.enable()
+
     jds_drama_handler = JdsDramaHandler(sys.argv[1:])
 
     jds_drama_handler.reset()
@@ -37,3 +42,7 @@ if __name__ == "__main__":
     jds_drama_handler.read_dramas()
 
     print("{} ended".format(__file__))
+
+    if settings.enable_profiler:
+        pr.disable()
+        pr.print_stats(sort="cumulative")
