@@ -28,6 +28,14 @@ class JdsDramaHandler:
             dramas.append(JdsDrama(len(dramas), os.path.basename(subfolder)))
         self.db.push_dramas(dramas)
 
+    def read_episodes(self):
+        episodes = {}
+        subfolders = DccUtils.get_subfolders(self.args["path"])
+        for subfolder in subfolders:
+            for filepath in DccUtils.get_files(subfolder):
+                episodes[len(episodes)] = os.path.basename(filepath)
+        self.db.push_episodes(episodes)
+
 
 if __name__ == "__main__":
     print("{} started".format(__file__))
@@ -42,6 +50,7 @@ if __name__ == "__main__":
     jds_drama_handler.reset()
 
     jds_drama_handler.read_dramas()
+    jds_drama_handler.read_episodes()
 
     print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
 

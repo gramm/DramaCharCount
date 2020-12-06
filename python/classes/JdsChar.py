@@ -30,6 +30,8 @@ class JdsChar:
         self.flag = 0
         self.freq = 0
         self.freq_cum = 0
+        self.episode_count = 0
+        self.drama_count = 0
         self.__count = 0
         self.__count_round = None
 

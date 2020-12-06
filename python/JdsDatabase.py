@@ -161,7 +161,7 @@ class JdsDatabase:
         lines = []
         try:
             for result in results:
-                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value']))
+                lines.append(JdsLine(result['line_uid'], result['drama_uid'], result['value'], result['episode_uid']))
         except Exception as e:
             exception(e)
         return lines
@@ -226,6 +226,13 @@ class JdsDatabase:
         results = self.__cursor_execute_fetchall_thread_safe(sql)
         return results
 
+    def get_episodes_raw(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM episode "
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        return results
+
     def push_lines(self, lines):
         if not self.__check_state():
             return
@@ -234,11 +241,11 @@ class JdsDatabase:
         packet_size = 0
         for line in lines:
             line_value = self.__escape_sql(line.value)
-            sql_insert = "({},{},'{}')".format(line.uid, line.drama_uid, line_value)
+            sql_insert = "({},{},'{}',{})".format(line.uid, line.drama_uid, line_value, line.episode_uid)
 
             # push if we will reach max_allowed_packets
             if (packet_size + len(sql_insert)) >= self.max_allowed_packets / 2:
-                sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
+                sql = "INSERT INTO line (line_uid, drama_uid, value, episode_uid) VALUES {}".format(",".join(sql_inserts))
                 self.__cursor_execute_thread_safe(sql)
                 sql_inserts.clear()
                 packet_size = 0
@@ -248,7 +255,7 @@ class JdsDatabase:
 
         # push the remaining part
         if len(sql_inserts) > 0:
-            sql = "INSERT INTO line (line_uid, drama_uid, value) VALUES {}".format(",".join(sql_inserts))
+            sql = "INSERT INTO line (line_uid, drama_uid, value, episode_uid) VALUES {}".format(",".join(sql_inserts))
             self.__cursor_execute_thread_safe(sql)
 
     def push_dramas(self, dramas):
@@ -260,6 +267,17 @@ class JdsDatabase:
             sql_insert = "({},'{}')".format(drama.uid, drama_value)
             sql_inserts.append(sql_insert)
         sql = "INSERT INTO drama (drama_uid, name) VALUES {}".format(",".join(sql_inserts))
+        self.__cursor_execute_thread_safe(sql)
+
+    def push_episodes(self, episodes):
+        if not self.__check_state():
+            return
+        sql_inserts = []
+        for episode_uid, episode_name in episodes.items():
+            name = self.__escape_sql(episode_name)
+            sql_insert = "({},'{}')".format(episode_uid, name)
+            sql_inserts.append(sql_insert)
+        sql = "INSERT INTO episode (episode_uid, name) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
 
     def push_chars_to_line(self, chars):
@@ -398,7 +416,7 @@ class JdsDatabase:
         self.__cursor.execute(sql)
 
         print("Creating table 'line'")
-        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, value TEXT, INDEX(line_uid), INDEX(drama_uid))"
+        sql = "CREATE TABLE line (line_uid INT UNSIGNED PRIMARY KEY NOT NULL, drama_uid SMALLINT NOT NULL, episode_uid SMALLINT UNSIGNED NOT NULL, value TEXT, INDEX(line_uid), INDEX(episode_uid))"
         self.__cursor.execute(sql)
 
     def reset_dramas(self):
@@ -410,6 +428,14 @@ class JdsDatabase:
 
         print("Creating table 'drama'")
         sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), kanji_ok TINYINT,word_ok TINYINT, kanji_line_ref_ok TINYINT,word_line_ref_ok TINYINT, INDEX(drama_uid))"
+        self.__cursor.execute(sql)
+
+        print("Dropping table 'episode'")
+        sql = "DROP TABLE IF EXISTS episode"
+        self.__cursor.execute(sql)
+
+        print("Creating table 'episode'")
+        sql = "CREATE TABLE episode (episode_uid SMALLINT UNSIGNED PRIMARY KEY NOT NULL, name VARCHAR(255), INDEX(episode_uid))"
         self.__cursor.execute(sql)
 
     def reset_chars(self):

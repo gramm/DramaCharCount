@@ -1,8 +1,10 @@
 import cProfile
+import concurrent.futures
 import os
 import sys
 import time
 
+from mysql.connector import Error
 from python import DccUtils, settings
 from python.DccUtils import parse_args, exception
 from python.JdsDatabase import JdsDatabase
@@ -18,32 +20,50 @@ class JdsLineHandler:
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
+        self.episode_to_uid = {}
 
     def reset(self):
         return self.db.reset_lines()
 
-    def read_lines(self):
-        subfolders = DccUtils.get_subfolders(self.args["path"])
-        line_id = 0
+    def line_ref_worker(self, subfolder):
         lines = []
-        for subfolder in subfolders:
-            drama = self.db.get_drama(os.path.basename(subfolder))
+        drama = self.db.get_drama(os.path.basename(subfolder))
+        print("read_lines for drama {}".format(drama.uid))
+        subfolders = DccUtils.get_subfolders(self.args["path"])
+        for filepath in DccUtils.get_files(subfolder):
+            filename = os.path.basename(filepath)
+            with open(filepath, encoding='utf-8') as file:
+                try:
+                    for line in file.readlines():
+                        try:
+                            lines.append(JdsLine(uid=0, drama_uid=drama.uid, value=line, episode_uid=self.episode_to_uid[filename]))
+                        except Exception as e:
+                            exception(e)
+                except Exception as e:
+                    exception(e)
+        return lines
 
-            print("read_lines for drama {}".format(drama.uid))
-            for filepath in DccUtils.get_files(subfolder):
-                with open(filepath, encoding='utf-8') as file:
-                    try:
-                        for line in file.readlines():
-                            try:
-                                lines.append(JdsLine(uid=line_id, drama_uid=drama.uid, value=line))
-                                line_id += 1
-                            except Exception as e:
-                                exception(e)
-                    except Exception as e:
-                        exception(e)
+    def read_lines(self):
+        line_id = 0
+        subfolders = DccUtils.get_subfolders(self.args["path"])
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            try:
+                futures = {}
+                for subfolder in subfolders:
+                    futures[subfolder] = executor.submit(self.line_ref_worker, subfolder)
+                for future in concurrent.futures.as_completed(futures.values()):
+                    lines = future.result()
+                    for line in lines:
+                        line.uid = line_id
+                        line_id += 1
+                    self.db.push_lines(lines)
+            except Error as e:
+                exception(e)
 
-            self.db.push_lines(lines)
-            lines.clear()
+    def setup(self):
+        results = self.db.get_episodes_raw()
+        for result in results:
+            self.episode_to_uid[result['name']] = result['episode_uid']
 
 
 if __name__ == "__main__":
@@ -57,6 +77,8 @@ if __name__ == "__main__":
     jds_line_handler = JdsLineHandler(sys.argv[1:])
 
     jds_line_handler.reset()
+
+    jds_line_handler.setup()
 
     jds_line_handler.read_lines()
 
