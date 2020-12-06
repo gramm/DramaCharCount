@@ -14,3 +14,6 @@ print_sql = False
 
 # Enable to profile execution time of scripts
 enable_profiler = False
+
+# Path to CSV dump (used in JdcCsvGen.py)
+csv_path_kanji = "../web/public_html/data_kanji_raw.csv"

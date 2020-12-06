@@ -211,6 +211,20 @@ class JdsDatabase:
             exception(e)
         return res
 
+    def get_kanji_count_raw(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM count "
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        return results
+
+    def get_kanji_info_raw(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM kanji_info "
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+        return results
+
     def push_lines(self, lines):
         if not self.__check_state():
             return
