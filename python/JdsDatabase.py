@@ -82,20 +82,23 @@ class JdsDatabase:
             return False
 
     def __cursor_execute_thread_safe(self, sql):
-        print(sql)
+        if settings.print_sql:
+            print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             self.__db.commit()
             # pass
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
-        print(sql)
+        if settings.print_sql:
+            print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchone()
 
     def __cursor_execute_fetchall_thread_safe(self, sql):
-        print(sql)
+        if settings.print_sql:
+            print(sql)
         with JdsDatabase.__lock:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
@@ -127,6 +130,22 @@ class JdsDatabase:
             drama.kanji_ok = result['kanji_ok']
             dramas.append(drama)
         return dramas
+
+    def get_all_lines_by_drama(self):
+        if not JdsDatabase.__check_state():
+            return
+        sql = "SELECT * FROM line "
+        results = self.__cursor_execute_fetchall_thread_safe(sql)
+
+        lines_by_drama = {}
+        try:
+            for result in results:
+                if result['drama_uid'] not in lines_by_drama:
+                    lines_by_drama[result['drama_uid']] = []
+                lines_by_drama[result['drama_uid']].append(JdsLine(result['line_uid'], result['drama_uid'], result['value']))
+        except Exception as e:
+            exception(e)
+        return lines_by_drama
 
     def get_lines_for_drama(self, drama):
         if not JdsDatabase.__check_state():
@@ -227,7 +246,7 @@ class JdsDatabase:
         if len(chars) is 0:
             return
         sql_inserts = []
-        for char in chars.keys():
+        for char_uid, char in chars.items():
             count = 0
             for line_uid in char.lines:
                 sql_insert = "({},{})".format(char.uid, line_uid)
@@ -398,8 +417,7 @@ class JdsDatabase:
 
         self.create_char_tables()
 
-        sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
-        self.__cursor.execute(sql)
+        self.reset_kanji_ok_for_all_drama()
 
         self.reset_info()
 
@@ -418,10 +436,10 @@ class JdsDatabase:
         sql = "CREATE TABLE word_info (word_uid INT UNSIGNED PRIMARY KEY NOT NULL, jlpt TINYINT, jouyou TINYINT, jdpt TINYINT, jlpt_pos SMALLINT UNSIGNED, jouyou_pos  SMALLINT  UNSIGNED, jdpt_pos   SMALLINT UNSIGNED, flag TINYINT, INDEX(word_uid,jlpt, jouyou, jdpt, jlpt_pos, jouyou_pos,jdpt_pos, flag))"
         self.__cursor.execute(sql)
 
-    def reset_kanji_ok_for_drama(self, drama):
+    def reset_kanji_ok_for_all_drama(self):
         if not self.__check_state():
             return
-        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama.uid, 0)
+        sql = "UPDATE drama SET kanji_ok=0".format(0)
         self.__cursor_execute_thread_safe(sql)
 
     def create_char_tables(self):

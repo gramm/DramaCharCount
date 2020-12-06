@@ -29,8 +29,17 @@ class JdsChar:
         self.__count = 0
         self.__count_round = None
 
+    @classmethod
+    def from_drama(cls, value, drama):
+        char = cls(value)
+        char.drama_uid = drama
+        return char
+
     def add_line_ref(self, line_uid):
         self.lines.add(line_uid)
+
+    def add_line_refs(self, line_uids):
+        self.lines.update(line_uids)
 
     def set_count(self, count):
         self.__count = count

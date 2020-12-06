@@ -6,3 +6,5 @@ connection_info = dict(
 )
 
 subtitles_path = "C:/Users/Max/Documents/_tmp/all_drama/"
+
+print_sql = False

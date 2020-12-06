@@ -1,17 +1,20 @@
 import concurrent.futures
 import sys
+import time
 
 from mysql.connector import Error
 
 from python.DccUtils import parse_args, exception
 from python.classes.JdsChar import JdsChar
 from python.JdsDatabase import JdsDatabase
+import cProfile
 
 
 class JdsCharHandler:
     def __init__(self, argv):
         self.args = parse_args(argv)
         self.db = JdsDatabase()
+        self.lines_by_drama = None
 
     def reset(self):
         return self.db.reset_chars()
@@ -23,38 +26,44 @@ class JdsCharHandler:
         :param drama:
         :return:
         """
-        print("start read_chars_worker for {}".format(drama.value))
         chars = {}  # key = char, value = count
-        jds_lines = self.db.get_lines_for_drama(drama)
+        lines = {}  # key = char, value = [] of line_uid
+        if drama.uid not in self.lines_by_drama:
+            return chars
+        jds_lines = self.lines_by_drama[drama.uid]
+        print("start read_chars_worker for {}".format(drama.value))
+        start_time = time.perf_counter()
         for jds_line in jds_lines:
             for char in jds_line.value:
-                jds_char = JdsChar(char)
-                jds_char.drama_uid = drama.uid
                 try:
-                    # increment count for this drama
-                    if jds_char not in chars:
-                        chars[jds_char] = jds_char
-                    chars[jds_char].set_count(chars[jds_char].count() + 1)
-                    chars[jds_char].add_line_ref(jds_line.uid)
+                    if char not in chars:
+                        chars[char] = 0
+                        lines[char] = []
+                    chars[char] = chars[char] + 1
+                    lines[char].append(jds_line.uid)
                 except Exception as e:
                     exception(e)
+
+        jds_chars = {}
+        for char in chars:
+            new_char = JdsChar.from_drama(char, drama.uid)
+            new_char.set_count(chars[char])
+            new_char.add_line_refs(lines[char])
+            jds_chars[char] = new_char
         if "\n" in chars:
             del chars[JdsChar("\n")]
             print("Deleted \\n")
-        print("stop read_chars_worker for {} with {} chars".format(drama.value, len(chars)))
-        return chars
+        run_time = time.perf_counter() - start_time
+        print("stop read_chars_worker for {} with {} chars in {}".format(drama.value, len(chars), run_time))
+        return jds_chars
 
     def read_chars(self):
         dramas = self.db.get_all_dramas()
-
-        # for drama in dramas:
-        #    chars = self.read_chars_worker(drama)
-        #    self.db.push_chars(chars)
+        self.lines_by_drama = self.db.get_all_lines_by_drama()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             while len(dramas) > 0:
                 try:
-                    print(len(dramas))
                     futures = {}
                     for drama in dramas:
                         if drama.kanji_ok is 1:
@@ -82,11 +91,20 @@ class JdsCharHandler:
 if __name__ == "__main__":
     print("{} started".format(__file__))
 
+    pr = cProfile.Profile()
+    pr.enable()
+
     jds_char_handler = JdsCharHandler(sys.argv[1:])
 
     jds_char_handler.create_tables()
-    # jds_char_handler.reset()
+
+    # uncomment to clear all drama count i.e. restart counting (drama, lines untouched)
+    jds_char_handler.reset()
 
     jds_char_handler.read_chars()
 
     print("{} ended".format(__file__))
+
+    pr.disable()
+    # after your program ends
+    pr.print_stats(sort="cumulative")
