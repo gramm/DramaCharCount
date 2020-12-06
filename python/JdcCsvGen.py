@@ -23,7 +23,7 @@ if __name__ == "__main__":
     kanji_count_results = db.get_kanji_count_raw()
 
     with open(settings.csv_path_kanji, mode='w', encoding='utf-8', newline='') as csv_file:
-        fieldnames = ['kanji', 'count', 'freq', 'freq_cum', 'jouyou', 'jouyou_pos']
+        fieldnames = ['kanji', 'count', 'freq', 'freq_cum', 'jdpt', 'jdpt_pos', 'jouyou', 'jouyou_pos']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames, delimiter='\t')
         rows = {}
         writer.writeheader()
@@ -35,6 +35,8 @@ if __name__ == "__main__":
             row['kanji'] = chr(result['kanji_uid'])
             row['jouyou'] = result['jouyou']
             row['jouyou_pos'] = result['jouyou_pos']
+            row['jdpt'] = result['jdpt']
+            row['jdpt_pos'] = result['jdpt_pos']
             row['freq'] = result['freq']
             row['freq_cum'] = result['freq_cum']
 
