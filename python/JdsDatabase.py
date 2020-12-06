@@ -103,6 +103,14 @@ class JdsDatabase:
             self.__cursor.execute(sql)
             return JdsDatabase.__cursor.fetchall()
 
+    def __drama_from_query_result(self, result):
+        drama = JdsDrama(result['drama_uid'], result['name'])
+        drama.word_ok = result['word_ok']
+        drama.kanji_ok = result['kanji_ok']
+        drama.word_line_ref_ok = result['word_line_ref_ok']
+        drama.kanji_line_ref_ok = result['kanji_line_ref_ok']
+        return drama
+
     def get_drama(self, name_or_uid):
         if not JdsDatabase.__check_state():
             return
@@ -114,7 +122,7 @@ class JdsDatabase:
             result = self.__cursor_execute_fetchone_thread_safe(sql)
 
         if result:
-            return JdsDrama(result['drama_uid'], result['name'])
+            return self.__drama_from_query_result(result)
         else:
             return None
 
@@ -125,10 +133,7 @@ class JdsDatabase:
         results = self.__cursor_execute_fetchall_thread_safe(sql)
         dramas = []
         for result in results:
-            drama = JdsDrama(result['drama_uid'], result['name'])
-            drama.word_ok = result['word_ok']
-            drama.kanji_ok = result['kanji_ok']
-            dramas.append(drama)
+            dramas.append(self.__drama_from_query_result(result))
         return dramas
 
     def get_all_lines_by_drama(self):
@@ -254,10 +259,14 @@ class JdsDatabase:
                 count += 1
                 if count == 10:
                     break
-
+        if len(sql_inserts) is 0:
+            return
         sql = "INSERT INTO kanji_to_line (kanji_uid, line_uid) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
+
+        sql = "INSERT INTO drama (drama_uid, kanji_line_ref_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_line_ref_ok=VALUES(kanji_line_ref_ok)".format(char.drama_uid, True)
+        self.__cursor_execute_thread_safe(sql)
 
     def push_chars_count(self, chars):
         if len(chars) is 0:
@@ -270,15 +279,6 @@ class JdsDatabase:
         sql = "INSERT INTO count (kanji_uid, drama_uid, count) VALUES {}".format(",".join(sql_inserts))
         self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
-
-    def push_kanji_ok(self, chars):
-
-        if len(chars) is 0:
-            return
-        char = None
-        for char_uid, mychar in chars.items():
-            char = mychar
-            break
 
         sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(char.drama_uid, True)
         self.__cursor_execute_thread_safe(sql)
@@ -394,7 +394,7 @@ class JdsDatabase:
         self.__cursor.execute(sql)
 
         print("Creating table 'drama'")
-        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), kanji_ok TINYINT,word_ok TINYINT, INDEX(drama_uid))"
+        sql = "CREATE TABLE drama (drama_uid SMALLINT PRIMARY KEY NOT NULL, name VARCHAR(255), kanji_ok TINYINT,word_ok TINYINT, kanji_line_ref_ok TINYINT,word_line_ref_ok TINYINT, INDEX(drama_uid))"
         self.__cursor.execute(sql)
 
     def reset_chars(self):
@@ -411,8 +411,6 @@ class JdsDatabase:
         sql = "DROP TABLE IF EXISTS kanji_flag"
         self.__cursor.execute(sql)
 
-        sql = "DROP TABLE IF EXISTS kanji_to_line"
-        self.__cursor.execute(sql)
         print("Creating chars table")
 
         self.create_char_tables()
@@ -451,9 +449,6 @@ class JdsDatabase:
         sql = "CREATE TABLE IF NOT EXISTS kanji (kanji_uid INT UNSIGNED PRIMARY KEY NOT NULL, value VARCHAR(1))"
         self.__cursor.execute(sql)
 
-        sql = "CREATE TABLE IF NOT EXISTS kanji_to_line (kanji_uid INT UNSIGNED, line_uid INT UNSIGNED , INDEX(kanji_uid), INDEX(line_uid)) "
-        self.__cursor.execute(sql)
-
         sql = "DROP TABLE IF EXISTS kanji_flag"
         self.__cursor.execute(sql)
 
@@ -462,3 +457,15 @@ class JdsDatabase:
 
         sql = "INSERT INTO kanji_flag (id, value) VALUES (1,'Kana'),(2,'Kanji'),(3,'Unreadable')"
         self.__cursor.execute(sql)
+
+    def reset_line_refs(self):
+        if not self.__check_state():
+            return
+        sql = "DROP TABLE IF EXISTS kanji_to_line"
+        self.__cursor.execute(sql)
+
+        sql = "CREATE TABLE IF NOT EXISTS kanji_to_line (kanji_uid INT UNSIGNED, line_uid INT UNSIGNED , INDEX(kanji_uid), INDEX(line_uid)) "
+        self.__cursor.execute(sql)
+
+        sql = "UPDATE drama SET kanji_line_ref_ok=0".format(0)
+        self.__cursor_execute_thread_safe(sql)
