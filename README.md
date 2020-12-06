@@ -8,18 +8,25 @@ In addition, the data is updated to a SQL and used on [jdramastuff.xyz](http://j
 ### Output
 The output of DCC is available in [data_kanji_raw.csv](https://github.com/gramm/DramaCharCount/blob/master/web/public_html/data_kanji_raw.csv). The columns are:
  - kanji	
+ 
  The kanji itself :o)
  - count	
+ 
 The number of occurrences between all subtitle files.
  - freq	
+ 
 The occurrence frequency i.e. count for this kanji divided by total kanji count (not total character count i.e. does not include hiragana for example).
  - cumul_freq	
+ 
 The cumulative frequency. For example a value of 50% means that the number of occurrences of all kanji up to the current kanji represent 50% of every kanji in every dramas.
  - drama_freq	
+ 
 The frequency of appearance of this kanji across dramas. For example a value of 30% means that this kanji appears in 30% of all dramas (and is never used in the other 70% of dramas).
  - episode_freq	
+ 
 The frequency of appearance of this kanji across episodes. For example a value of 30% means that this kanji appears in 30% of all episodes (and is never used in the other 70% of episodes).
  - jdpt	
+ 
 The JDPT level for this kanji. The JDPT is defined using the cumulative frequency as follows:
 
 
