@@ -28,23 +28,28 @@ class JdsCharHandler:
         """
         chars = {}  # key = char, value = count
         lines = {}  # key = char, value = [] of line_uid
+        episodes = {}
 
         print("start read_chars_worker for {}".format(drama.value))
         start_time = time.perf_counter()
         jds_lines = self.db.get_lines_for_drama(drama)
         for jds_line in jds_lines:
-            for char in jds_line.value:
-                try:
+            try:
+                for char in jds_line.value:
                     if char not in chars:
                         chars[char] = 0
+                        episodes[char] = set()
                     chars[char] = chars[char] + 1
-                except Exception as e:
-                    exception(e)
+                    if jds_line.episode_uid not in episodes[char]:
+                        episodes[char].add(jds_line.episode_uid)
+            except Exception as e:
+                exception(e)
 
         jds_chars = {}
         for char in chars:
             new_char = JdsChar.from_drama(char, drama.uid)
             new_char.set_count(chars[char])
+            new_char.episode_count = len(episodes[char])
             jds_chars[char] = new_char
         if "\n" in chars:
             del chars[JdsChar("\n")]
@@ -94,7 +99,7 @@ if __name__ == "__main__":
     jds_char_handler.create_tables()
 
     # uncomment to clear all drama count i.e. restart counting (drama, lines untouched)
-    # jds_char_handler.reset()
+    jds_char_handler.reset()
 
     jds_char_handler.read_chars()
     print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))

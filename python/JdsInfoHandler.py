@@ -102,6 +102,7 @@ class JdsInfoHandler:
             if is_kanji(self.chars[char_uid].value):
                 sum_all_count += self.chars[char_uid].count()
 
+        # set JDPT level
         position = 1
         cur_level = 6
         jdpt_limits = [1, 0.99, 0.98, 0.95, 0.9, 0.75, 0.5]
@@ -123,6 +124,34 @@ class JdsInfoHandler:
                     self.chars[char_uid].jdpt = cur_level - 1
 
         self.db.push_kanji_pos(self.chars)
+
+        # set episode and drama frequency
+        char_drama_count = {}
+        char_episode_count = {}
+        results = self.db.get_kanji_count_raw()
+        for result in results:
+            kanji_uid = result['kanji_uid']
+            if kanji_uid not in char_drama_count:
+                char_drama_count[kanji_uid] = 0
+                char_episode_count[kanji_uid] = 0
+            drama_uid = result['drama_uid']
+            episode_count = result['episode_count']
+            if drama_uid is 0:
+                continue
+            char_drama_count[kanji_uid] += 1
+            char_episode_count[kanji_uid] += episode_count
+
+        num_of_drama = len(self.db.get_all_dramas()) - 1  # -1 due to merge drama
+        num_of_episodes = len(self.db.get_all_episodes_raw())
+        char_drama_freq = {}
+        char_episode_freq = {}
+
+        for kanji_uid, count in char_drama_count.items():
+            char_drama_freq[kanji_uid] = count / num_of_drama
+        for kanji_uid, count in char_episode_count.items():
+            char_episode_freq[kanji_uid] = count / num_of_episodes
+
+        self.db.push_drama_and_episode_count(char_drama_freq, char_episode_freq)
 
     def update_kanji_flags(self):
         for char in self.chars.values():
