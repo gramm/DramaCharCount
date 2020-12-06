@@ -55,7 +55,7 @@ Be aware that no backup of the files is created.
 
 ### How to generate the JDTP from scratch
 The steps are as follow:
-
+ - Configure Settings.py
  - Create the drama table by executing JdsDramaHandler
  - Load all subtitle lines in the line table by executing JdsLineHandler
  - Count all characters by executing JdsCharHandler. Note that this script will mark a drama as "processed"  (drama[kanji_ok]=1) and will skip processed dramas on execution. It is therefore safe to interrupt the script to continue executing it later, or to execute it again if for example the MySQL connection failed. Clearing the "processed" state can be done by dropping all character info via  jds_char_handler.reset()
