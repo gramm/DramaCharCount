@@ -47,15 +47,20 @@ class JdsLineHandler:
         subfolders = DccUtils.get_subfolders(self.args["path"])
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             try:
-                futures = {}
-                for subfolder in subfolders:
-                    futures[subfolder] = executor.submit(self.line_ref_worker, subfolder)
-                for future in concurrent.futures.as_completed(futures.values()):
-                    lines = future.result()
-                    for line in lines:
-                        line.uid = line_id
-                        line_id += 1
-                    self.db.push_lines(lines)
+                while len(subfolders) > 0:
+                    futures = {}
+                    for subfolder in subfolders:
+                        futures[subfolder] = executor.submit(self.line_ref_worker, subfolder)
+                        subfolders.remove(subfolder)
+                        if len(futures) > 15:
+                            break;
+
+                    for future in concurrent.futures.as_completed(futures.values()):
+                        lines = future.result()
+                        for line in lines:
+                            line.uid = line_id
+                            line_id += 1
+                        self.db.push_lines(lines)
             except Error as e:
                 exception(e)
 

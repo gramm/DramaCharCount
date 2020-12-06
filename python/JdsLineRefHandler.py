@@ -66,7 +66,7 @@ class JdsLineRefHandler:
 
                         futures[drama] = executor.submit(self.line_ref_worker, drama)
                         dramas.remove(drama)
-                        if len(futures) > 10:
+                        if len(futures) > 15:
                             break
                     for future in concurrent.futures.as_completed(futures.values()):
                         chars = future.result()

@@ -1,3 +1,4 @@
+import time
 from threading import Lock
 
 import mysql
@@ -82,25 +83,33 @@ class JdsDatabase:
             return False
 
     def __cursor_execute_thread_safe(self, sql):
-        if settings.print_sql:
-            print(sql)
         with JdsDatabase.__lock:
+            if settings.print_sql:
+                print(sql)
+                cur_start_time = time.perf_counter()
             self.__cursor.execute(sql)
             self.__db.commit()
-            # pass
+            if settings.print_sql:
+                print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
-        if settings.print_sql:
-            print(sql)
         with JdsDatabase.__lock:
+            if settings.print_sql:
+                print(sql)
+                cur_start_time = time.perf_counter()
             self.__cursor.execute(sql)
+            if settings.print_sql:
+                print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
             return JdsDatabase.__cursor.fetchone()
 
     def __cursor_execute_fetchall_thread_safe(self, sql):
-        if settings.print_sql:
-            print(sql)
         with JdsDatabase.__lock:
+            if settings.print_sql:
+                print(sql)
+                cur_start_time = time.perf_counter()
             self.__cursor.execute(sql)
+            if settings.print_sql:
+                print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
             return JdsDatabase.__cursor.fetchall()
 
     @staticmethod

@@ -90,6 +90,7 @@ Be aware that no backup of the files is created.
 
 ### How to generate the JDTP from scratch
 The steps are as follow:
+ - Have a local SQL server running (XAMPP started, verify MySQL running via phpMyAdmin)
  - Configure Settings.py
  - Create the drama table by executing JdsDramaHandler
  - Load all subtitle lines in the line table by executing JdsLineHandler

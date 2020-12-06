@@ -89,7 +89,6 @@ if __name__ == "__main__":
     print("{} started".format(__file__))
     start_time = time.perf_counter()
 
-    pr = None
     if settings.enable_profiler:
         pr = cProfile.Profile()
         pr.enable()
