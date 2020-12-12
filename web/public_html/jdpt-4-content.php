@@ -1,6 +1,6 @@
 
 	<div class="blabla help text-left">
-	The table below shows the detailed kanji information for the selected JDTP level. Please hover on the table headers for a description.
+	The table below shows the detailed kanji information for the selected JDTP level. See the introduction for a description of the columns.
 	</div>
 	
 	<br />

@@ -26,53 +26,45 @@ function drawJdptTable($con, $level)
 	
 	echo "<table class='table table-bordered table-striped table-sm' id='myTable'>
 		<tr>
-			<th onclick='sortTable(0, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='The actual kanji'>Word</div></th>
-			<th onclick='sortTable(1, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Number of occurences in all dramas'>Count</div></th>
-			<th onclick='sortTable(2, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JLPT level'>Jlpt</div></th>
-			<th onclick='sortTable(3, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Jōyō level'>Jōyō</div></th>
-			<th onclick='sortTable(4, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JDPT level'>Jdpt</div></th>
-			<th onclick='sortTable(5, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JLPT position (sorted by level then by count between all dramas)'>Jlpt pos</div></th>
-			<th onclick='sortTable(6, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Jōyō position (sorted by level then by count between all dramas)'>Jōyō pos</div></th>
-			<th onclick='sortTable(7, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='JSPT position (sorted by count between all dramas)'>Jdpt pos</div></th>
-			<th onclick='sortTable(8, ".$level.")'><div data-toggle='tooltip' data-placement='right' title='Position difference between the JLPT and JDPT position. For example, 1500 means that the JLPT position is positioned 1500 kanji later than in the JDPT.'>Diff Jdpt to Jlpt</div></th>
+			<th onclick='sortTable(0, ".$level.")'>Kanji</th>
+			<th onclick='sortTable(1, ".$level.")'>Count</th>
+			<th onclick='sortTable(2, ".$level.")'>Frequency</th>
+			<th onclick='sortTable(3, ".$level.")'>Cumulated Frequency</th>
+			<th onclick='sortTable(4, ".$level.")'>Drama Frequency</th>
+			<th onclick='sortTable(5, ".$level.")'>Episode Frequency</th>
+			<th onclick='sortTable(6, ".$level.")'>JDPT</th>
+			<th onclick='sortTable(7, ".$level.")'>JDPT Pos</th>
+			<th onclick='sortTable(8, ".$level.")'>Jōyō</th>
+			<th onclick='sortTable(9, ".$level.")'>Jōyō Pos</th>
 		</tr>";
 
 		$wordTable = "";
 		while($row = mysqli_fetch_array($result))
 		{
 			echo "<tr>";
-				echo "<td>" . $row['value'] . "</a></td>";
+				echo "<td>" .$row['value'] . "</a></td>";
 				
 				echo "<td>" . $row['count'] . "</td>";
+
+				echo "<td>" . number_format(100*$row['freq'],2) . "%</td>";
 				
-				if(((int)$row['jlpt'])>0) {echo "<td>" . $row['jlpt'] . "</td>";}
-				else {echo "<td>Not in JLPT</td>";}
+				echo "<td>" . number_format(100*$row['cumul_freq'],2) . "%</td>";
 				
-				if(((int)$row['jouyou'])>0) {echo "<td>" . $row['jouyou'] . "</td>";}
-				else {echo "<td>Not in Jōyō</td>";}
+				echo "<td>" . number_format(100*$row['drama_freq'],2) . "%</td>";
+				
+				echo "<td>" . number_format(100*$row['episode_freq'],2) . "%</td>";
 				
 				if(((int)$row['jdpt'])>0) {echo "<td>" . $row['jdpt'] . "</td>";}
 				else {echo "<td>-</td>";}
 				
-				if(((int)$row['jlpt_pos'])>0) {echo "<td>" . $row['jlpt_pos'] . "</td>";}
-				else {echo "<td>Not in JLPT</td>";}
-				
-				if(((int)$row['jouyou_pos'])>0) {echo "<td>" . $row['jouyou_pos'] . "</td>";}
-				else {echo "<td>Not in Jōyō</td>";}
-				
 				if(((int)$row['jdpt_pos'])>0) {echo "<td>" . $row['jdpt_pos'] . "</td>";}
 				else {echo "<td>-</td>";}
 				
-				if(((int)$row['jdpt_to_jlpt'])!= -32768) {echo "<td>" . $row['jdpt_to_jlpt'] . "</td>";}
-				else {echo "<td>Not in JLPT</td>";}
+				if(((int)$row['jouyou'])>0) {echo "<td>" . $row['jouyou'] . "</td>";}
+				else {echo "<td>Not in Jōyō</td>";}
 				
-				/*
-				if(((int)$row['dist_to_jlpt']) == 0) {echo "<td>" . "Same level" . "</td>";}
-				else if(((int)$row['dist_to_jlpt']) == $level) {echo "<td>" . "Not in JLPT" . "</td>";}
-				else if(((int)$row['dist_to_jlpt'])!=99) {echo "<td>" . $row['dist_to_jlpt'] . "</td>";}
-				else {echo "<td>-</td>";}
-				*/
-				
+				if(((int)$row['jouyou_pos'])>0) {echo "<td>" . $row['jouyou_pos'] . "</td>";}
+				else {echo "<td>Not in Jōyō</td>";}
 				
 			echo "</tr>";
 		}

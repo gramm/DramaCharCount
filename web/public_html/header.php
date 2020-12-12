@@ -57,7 +57,10 @@ function sortTable(n, level) {
 
         c = rows[i].getElementsByTagName("TD")[0].innerHTML;
         x = rows[i].getElementsByTagName("TD")[n].innerHTML;//.toLowerCase();
-        var ix = parseInt(x);
+		if(x.indexOf('%') != -1){
+			x = x.slice(0, -1); // remove last char
+		}
+        var ix = parseFloat(x);
         if (isNaN(ix) == false) {
             x = ix;
         }
