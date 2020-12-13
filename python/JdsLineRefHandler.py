@@ -42,7 +42,7 @@ class JdsLineRefHandler:
         jds_chars = {}
         for char in lines:
             new_char = JdsChar.from_drama(char, drama.uid)
-            new_char.add_line_refs(lines[char])
+            new_char.add_line_refs(lines[char][:10])
             jds_chars[char] = new_char
         if "\n" in lines:
             del lines[JdsChar("\n")]
