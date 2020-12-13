@@ -53,7 +53,7 @@ class JdsDatabase:
             user = settings.connection_info['user']
             password = settings.connection_info['password']
         try:
-            connection_timeout = 0.1
+            connection_timeout = 2
             print("Connecting {}:{}:{}".format(host, database, user))
             JdsDatabase.__db = mysql.connector.connect(
                 host=host,
@@ -87,8 +87,21 @@ class JdsDatabase:
             if settings.print_sql:
                 print(sql)
                 cur_start_time = time.perf_counter()
-            self.__cursor.execute(sql)
-            self.__db.commit()
+            try:
+                self.__cursor.execute(sql)
+                self.__db.commit()
+            except Error as e:
+                # try again
+                try:
+                    self.__db.reconnect(3, 3)
+                    if self.__check_state():
+                        self.__cursor.execute(sql)
+                        self.__db.commit()
+                    else:
+                        print("Could not reconnect to server")
+                except Error as e:
+                    exception(e)
+
             if settings.print_sql:
                 print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
 
@@ -97,7 +110,13 @@ class JdsDatabase:
             if settings.print_sql:
                 print(sql)
                 cur_start_time = time.perf_counter()
-            self.__cursor.execute(sql)
+            try:
+                self.__cursor.execute(sql)
+            except Error as e:
+                try:
+                    self.__db.reconnect(3, 5)
+                except Error as e:
+                    exception(e)
             if settings.print_sql:
                 print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
             return JdsDatabase.__cursor.fetchone()
@@ -107,7 +126,13 @@ class JdsDatabase:
             if settings.print_sql:
                 print(sql)
                 cur_start_time = time.perf_counter()
-            self.__cursor.execute(sql)
+                try:
+                    self.__cursor.execute(sql)
+                except Error as e:
+                    try:
+                        self.__db.reconnect(3, 5)
+                    except Error as e:
+                        exception(e)
             if settings.print_sql:
                 print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
             return JdsDatabase.__cursor.fetchall()
