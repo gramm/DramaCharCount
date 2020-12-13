@@ -53,7 +53,7 @@ class JdsDatabase:
             user = settings.connection_info['user']
             password = settings.connection_info['password']
         try:
-            connection_timeout = 2
+            connection_timeout = 100
             print("Connecting {}:{}:{}".format(host, database, user))
             JdsDatabase.__db = mysql.connector.connect(
                 host=host,
@@ -101,9 +101,11 @@ class JdsDatabase:
                         print("Could not reconnect to server")
                 except Error as e:
                     exception(e)
+                    return False
 
             if settings.print_sql:
                 print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
+        return True
 
     def __cursor_execute_fetchone_thread_safe(self, sql):
         with JdsDatabase.__lock:
@@ -125,14 +127,16 @@ class JdsDatabase:
         with JdsDatabase.__lock:
             if settings.print_sql:
                 print(sql)
-                cur_start_time = time.perf_counter()
+            cur_start_time = time.perf_counter()
+            try:
+                self.__cursor.execute(sql)
+            except Error as e:
                 try:
+                    self.__db.reconnect(3, 5)
                     self.__cursor.execute(sql)
                 except Error as e:
-                    try:
-                        self.__db.reconnect(3, 5)
-                    except Error as e:
-                        exception(e)
+                    exception(e)
+                    return None
             if settings.print_sql:
                 print("in {:2.2f}".format(time.perf_counter() - cur_start_time))
             return JdsDatabase.__cursor.fetchall()
@@ -356,11 +360,14 @@ class JdsDatabase:
             sql_inserts.append(sql_insert)
 
         sql = "INSERT INTO count (kanji_uid, drama_uid, count, episode_count) VALUES {}".format(",".join(sql_inserts))
-        self.__cursor_execute_thread_safe(sql)
+        res = self.__cursor_execute_thread_safe(sql)
         sql_inserts.clear()
 
-        sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama_uid, True)
-        self.__cursor_execute_thread_safe(sql)
+        if res:
+            res = False
+            while res is False:
+                sql = "INSERT INTO drama (drama_uid, kanji_ok) VALUES ({},{}) ON DUPLICATE KEY UPDATE drama_uid=VALUES(drama_uid), kanji_ok=VALUES(kanji_ok)".format(drama_uid, True)
+                res = self.__cursor_execute_thread_safe(sql)
 
     def push_char(self, char):
         # push kanji
