@@ -251,7 +251,7 @@ function displayWordTable()
 	AND a.value NOT IN (".$sqlFilteredUserKanji.")
 	WHERE b.drama_uid = ".$selectedDrama."  
 	ORDER BY `b`.`count` DESC
-	LIMIT 1000
+	LIMIT 100
 	");
 	
 	
@@ -286,8 +286,8 @@ function displayWordTable()
 			echo "</tr>";
 		}
 	echo "</table>";
-	if($ctr == 1000){
-		echo "Kanji display limited to maximum 1000 results for the moment.";
+	if($ctr == 100){
+		echo "Kanji display limited to maximum 100 results for the moment.";
 	}
 }
 

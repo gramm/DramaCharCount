@@ -87,7 +87,7 @@ if __name__ == "__main__":
     jds_line_ref_handler = JdsLineRefHandler(sys.argv[1:])
 
     # uncomment to clear all line associations
-    jds_line_ref_handler.reset()
+    # jds_line_ref_handler.reset()
 
     jds_line_ref_handler.do_line_ref()
 

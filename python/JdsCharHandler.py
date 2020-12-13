@@ -98,7 +98,7 @@ if __name__ == "__main__":
     jds_char_handler.create_tables()
 
     # uncomment to clear all drama count i.e. restart counting (drama, lines untouched)
-    jds_char_handler.reset()
+    # jds_char_handler.reset()
 
     jds_char_handler.read_chars()
     print("{} ended in {:2.2f}".format(__file__, (time.perf_counter() - start_time)))
